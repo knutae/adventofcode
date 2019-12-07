@@ -1,8 +1,7 @@
 import itertools
 import sys
 
-def run(program, input=[], output=[]):
-    program = list(program)
+def run_generator(program, input):
     ip = 0
     input_index = 0
 
@@ -50,7 +49,7 @@ def run(program, input=[], output=[]):
             [a] = params(1)
             r = getparam(a, 0)
             #print(r)
-            output.append(r)
+            yield r
         elif opcode == 5:
             # jump-if-true
             [a, b] = params(2)
@@ -71,13 +70,13 @@ def run(program, input=[], output=[]):
             program[c] = 1 if getparam(a, 0) == getparam(b, 1) else 0
         else:
             assert False
-    #print(program[0])
+
+def run(program, input=[]):
+    list(run_generator(program, input))
     return program
 
 def run_output(program, input=[]):
-    output = []
-    run(program, input, output)
-    return output
+    return list(run_generator(program, input))
 
 def test():
     assert run([1,9,10,3,2,3,11,0,99,30,40,50]) == [3500,9,10,70,2,3,11,0,99,30,40,50]
@@ -128,5 +127,47 @@ assert max_thruster_signal([3,15,3,16,1002,16,10,16,1,16,15,15,4,15,99,0,0]) == 
 assert max_thruster_signal([3,23,3,24,1002,24,10,24,1002,23,-1,23,101,5,23,23,1,24,23,23,4,23,99,0,0]) == 54321
 assert max_thruster_signal([3,31,3,32,1002,32,10,32,1001,31,-2,31,1007,31,0,33,1002,33,7,33,1,33,31,31,1,32,31,31,4,31,99,0,0,0]) == 65210
 
+def run_feedback_loop(program, phase_settings):
+    n = len(phase_settings)
+    amps = []
+    inputs = [[p] for p in phase_settings]
+    inputs[0].append(0) # first signal
+    # first iteration
+    for i in range(n):
+        amp = run_generator(list(program), inputs[i])
+        output = next(amp)
+        inputs[(i+1) % n].append(output)
+        amps.append(amp)
+    # main loop: keep running until an amplifier halts
+    final_output = output
+    #print(f'first loop {output}')
+    main_iterations = 0
+    try:
+        while True:
+            main_iterations += 1
+            for i in range(n):
+                output = next(amps[i])
+                inputs[(i+1) % n].append(output)
+            final_output = output
+    except StopIteration:
+        #print(f'main iterations {main_iterations}')
+        pass
+    #print(final_output)
+    return final_output
+
+def max_feedback_loop(program):
+    return max(run_feedback_loop(program, phase_settings) for phase_settings in itertools.permutations(range(5,10)))
+
+def test_feedback():
+    program1 = [3,26,1001,26,-4,26,3,27,1002,27,2,27,1,27,26,27,4,27,1001,28,-1,28,1005,28,6,99,0,0,5]
+    assert run_feedback_loop(program1, [9,8,7,6,5]) == 139629729
+    assert max_feedback_loop(program1) == 139629729
+    program2 = [3,52,1001,52,-5,52,3,53,1,52,56,54,1007,54,5,55,1005,55,26,1001,54,-5,54,1105,1,12,1,53,54,53,1008,54,0,55,1001,55,1,55,2,53,55,53,4,53,1001,56,-1,56,1005,56,6,99,0,0,0,0,10]
+    assert run_feedback_loop(program2, [9,7,8,5,6]) == 18216
+    assert max_feedback_loop(program2) == 18216
+
+test_feedback()
+
 program = [int(x) for x in sys.stdin.read().strip().split(',')]
-print(max_thruster_signal(program))
+#print(max_thruster_signal(program))
+print(max_feedback_loop(program))
