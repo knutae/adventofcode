@@ -152,5 +152,5 @@ def solve(program, input=[1]):
     return r
 
 program = [int(x) for x in sys.stdin.read().strip().split(',')]
-solve(program)
-#solve(program, [5])
+#solve(program)
+solve(program, [2])
