@@ -176,12 +176,13 @@ def test():
 
 test()
 
-def run_robot(program):
+def run_robot(program, start_input):
     tiles = defaultdict(int)
+    tiles[(0,0)] = start_input
     painted = set()
     x, y = 0, 0 # position
     dx, dy = 0, -1 # direction
-    input = ManualInput(0)
+    input = ManualInput(start_input)
     output = run_yield(program, input)
     try:
         while True:
@@ -213,7 +214,16 @@ def run_robot(program):
         print('Stop!')
     #print(len(tiles))
     print(len(painted))
+    startx = min(painted, key=lambda pos: pos[0])[0]
+    endx = max(painted, key=lambda pos: pos[0])[0]
+    starty = min(painted, key=lambda pos: pos[1])[1]
+    endy = max(painted, key=lambda pos: pos[1])[1]
+    print(startx, starty, endx, endy)
+    for y in range(starty, endy+1):
+        line = ['#' if tiles[(x,y)] else ' ' for x in range(startx, endx+1)]
+        print(''.join(line))
 
 
 program = [int(x) for x in sys.stdin.read().strip().split(',')]
-run_robot(program)
+#run_robot(program, 0)
+run_robot(program, 1)
