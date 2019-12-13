@@ -176,19 +176,54 @@ def test():
 
 test()
 
+TILE_CHARS = ' #x-o'
+
+def draw(tiles):
+    xmax, ymax = max(tiles.keys())
+    for y in range(ymax+1):
+        print(''.join(TILE_CHARS[tiles[(x,y)]] for x in range(xmax+1)))
+
 def solve(program):
-    output = run_yield(program, ArrayInput([]))
+    program[0] = 2 # part 2
+    joystick = ManualInput(0)
+    output = run_yield(program, joystick)
     tiles = dict()
+    ball_x = None
+    paddle_x = None
+    score = None
     try:
         while True:
             x = next(output)
             y = next(output)
             tile = next(output)
+            if (x,y) == (-1, 0):
+                score = tile
+                print(f"new score: {score}")
+                draw(tiles)
+                continue
+
+            if tile == 4:
+                # ball position set/updated
+                ball_x = x
+            elif tile == 3:
+                # paddle position set/updated
+                paddle_x = x
+            # always move the paddle towards the ball
+            if ball_x is not None and paddle_x is not None:
+                if ball_x > paddle_x:
+                    joystick.value = 1
+                elif ball_x < paddle_x:
+                    joystick.value = -1
+                else:
+                    joystick.value = 0
             tiles[(x,y)] = tile
     except StopIteration:
         pass
     
-    print(len([x for x in tiles.values() if x == 2]))
+    #print(len([x for x in tiles.values() if x == 2]))
+    draw(tiles)
+    #print(ball_x, paddle_x)
+    print(f"final score: {score}")
 
 program = [int(x) for x in sys.stdin.read().strip().split(',')]
 solve(program)
