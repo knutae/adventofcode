@@ -31,9 +31,9 @@ def parse(s):
 def ceildiv(a, b):
     return -(-a // b)
 
-def calculate_ore(reactions):
+def calculate_ore(reactions, fuel=1):
     materials = defaultdict(int)
-    materials['FUEL'] = 1
+    materials['FUEL'] = fuel
     while [m for m in materials.keys() if materials[m] > 0] != ['ORE']:
         to_convert = [(m, materials[m]) for m in materials.keys() if m != 'ORE']
         for m, needed_amount in to_convert:
@@ -52,6 +52,20 @@ def calculate_ore(reactions):
     #print(materials['ORE'])
     return materials['ORE']
 
+def calculate_fuel(reactions, ore=1000000000000):
+    low = 1
+    high = ore
+    while low + 1 < high:
+        mid = (low + high) // 2
+        r = calculate_ore(reactions, mid)
+        #print(mid, r)
+        if r > ore:
+            high = mid
+        else:
+            low = mid
+    #print(low)
+    return low
+
 def test():
     assert calculate_ore(parse('''
 10 ORE => 10 A
@@ -68,7 +82,8 @@ def test():
 5 B, 7 C => 1 BC
 4 C, 1 A => 1 CA
 2 AB, 3 BC, 4 CA => 1 FUEL''')) == 165
-    assert calculate_ore(parse('''
+
+    example1 = parse('''
 157 ORE => 5 NZVS
 165 ORE => 6 DCFZ
 44 XJWVT, 5 KHKGT, 1 QDVJ, 29 NZVS, 9 GPVTF, 48 HKGWZ => 1 FUEL
@@ -77,8 +92,11 @@ def test():
 177 ORE => 5 HKGWZ
 7 DCFZ, 7 PSHF => 2 XJWVT
 165 ORE => 2 GPVTF
-3 DCFZ, 7 NZVS, 5 HKGWZ, 10 PSHF => 8 KHKGT''')) == 13312
-    assert calculate_ore(parse('''
+3 DCFZ, 7 NZVS, 5 HKGWZ, 10 PSHF => 8 KHKGT''')
+    assert calculate_ore(example1) == 13312
+    assert calculate_fuel(example1) == 82892753
+
+    example2 = parse('''
 2 VPVL, 7 FWMGM, 2 CXFTF, 11 MNCFX => 1 STKFG
 17 NVRVD, 3 JNWZP => 8 VPVL
 53 STKFG, 6 MNCFX, 46 VJHF, 81 HVMC, 68 CXFTF, 25 GNMV => 1 FUEL
@@ -90,8 +108,11 @@ def test():
 145 ORE => 6 MNCFX
 1 NVRVD => 8 CXFTF
 1 VJHF, 6 MNCFX => 4 RFSQX
-176 ORE => 6 VJHF''')) == 180697
-    assert calculate_ore(parse('''
+176 ORE => 6 VJHF''')
+    assert calculate_ore(example2) == 180697
+    assert calculate_fuel(example2) == 5586022
+
+    example3 = parse('''
 171 ORE => 8 CNZTR
 7 ZLQW, 3 BMBT, 9 XCVML, 26 XMNCP, 1 WPTQ, 2 MZWV, 1 RJRHP => 4 PLWSL
 114 ORE => 4 BHXH
@@ -108,12 +129,15 @@ def test():
 3 BHXH, 2 VRPVC => 7 MZWV
 121 ORE => 7 VRPVC
 7 XCVML => 6 RJRHP
-5 BHXH, 4 VRPVC => 5 LTCX''')) == 2210736
+5 BHXH, 4 VRPVC => 5 LTCX''')
+    assert calculate_ore(example3) == 2210736
+    assert calculate_fuel(example3) == 460664
 
 test()
 
 def main():
     reactions = parse(sys.stdin.read())
     print(calculate_ore(reactions))
+    print(calculate_fuel(reactions))
 
 main()
