@@ -260,7 +260,7 @@ def explore(program):
     draw_map(tiles, robot)
 
 def parse_map(s):
-    lines = s.strip().split('\n')
+    lines = s.rstrip().split('\n')
     walls = set()
     start = None
     dest = None
@@ -277,7 +277,7 @@ def parse_map(s):
                 assert c in '. D'
     assert start is not None
     assert dest is not None
-    return walls, start, dest
+    return frozenset(walls), start, dest
 
 def shortest_path(walls, start, dest):
     visited = set()
@@ -295,6 +295,27 @@ def shortest_path(walls, start, dest):
         candidates = new_candidates
     return iterations
 
+def debug_print(walls, visited):
+    for y in range(42):
+        print(''.join('O' if (x,y) in visited else '#' if (x,y) in walls else ' ' for x in range(42)))
+
+def fill_map(walls, start):
+    visited = set()
+    candidates = {start}
+    iterations = 0
+    while candidates:
+        iterations += 1
+        visited |= candidates
+        new_candidates = set()
+        for pos in candidates:
+            for direction in [1,2,3,4]:
+                target = target_pos(pos, direction)
+                if target not in visited and target not in walls:
+                    new_candidates.add(target)
+        candidates = new_candidates
+        #debug_print(walls, visited)
+    return iterations - 1
+
 def main_explore():
     with open('input') as f:
         program = [int(x) for x in f.read().strip().split(',')]
@@ -305,6 +326,7 @@ def main_solve():
     with open('map') as f:
         walls, start, dest = parse_map(f.read())
     print(shortest_path(walls, start, dest))
+    print(fill_map(walls, dest))
 
 #main_explore()
 main_solve()
