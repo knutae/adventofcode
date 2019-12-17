@@ -1,5 +1,5 @@
 import sys
-import random
+import itertools
 from collections import defaultdict
 
 class Input:
@@ -207,8 +207,110 @@ def solve_map(program):
     print(result)
     return result
 
+def indexes_of(path, sub, start):
+    assert len(sub) > 0
+    assert None not in sub
+    return [i for i in range(start, len(path)-len(sub)+1) if path[i:i+len(sub)] == sub]
+
+def generate_replacement_indexes(path, sub):
+    indexes = indexes_of(path, sub, 0)
+    for length in range(1, len(indexes)+1):
+        for index_combo in itertools.combinations(indexes, length):
+            if any(b - a < len(sub) for a, b in zip(index_combo, index_combo[1:])):
+                # indexes too close to replace all
+                continue
+            yield index_combo
+
+def generate_replacements(path, sub):
+    replacement = [None] * len(sub)
+    for index_combo in generate_replacement_indexes(path, sub):
+        rpath = list(path)
+        for index in index_combo:
+            rpath[index:index+len(sub)] = replacement
+        yield index_combo, rpath
+
+def generate_substitution_candidates(path, min_length):
+    if all(x is None for x in path):
+        return
+    start = min(i for i in range(len(path)) if path[i] is not None)
+    path = path[start:]
+    for length in range(min_length, len(path)+1):
+        sub = path[:length]
+        if sub[-1] == None:
+            break
+        yield sub
+
+def main_function(index_dict):
+    #print(index_dict)
+    max_index = max(max(indexes) for indexes in index_dict.values())
+    r = []
+    for i in range(max_index+1):
+        for key, indexes in index_dict.items():
+            if i in indexes:
+                r.append(key)
+    return r
+
+def generate_solution_candidates(path0, min_length=4):
+    for sub0 in generate_substitution_candidates(path0, min_length):
+        for index1, path1 in generate_replacements(path0, sub0):
+            for sub1 in generate_substitution_candidates(path1, min_length):
+                for index2, path2 in generate_replacements(path1, sub1):
+                    for sub2 in generate_substitution_candidates(path2, min_length):
+                        for index3, path3 in generate_replacements(path2, sub2):
+                            if all(x is None for x in path3):
+                                #yield (','.join(sub0), ','.join(sub1), ','.join(sub2))
+                                a = ','.join(sub0)
+                                b = ','.join(sub1)
+                                c = ','.join(sub2)
+                                main = ','.join(main_function({'A': index1, 'B': index2, 'C': index3}))
+                                #print(' -- '.join([a,b,c,main]))
+                                if all(len(x) <= 20 for x in (a,b,c,main)):
+                                    yield main,a,b,c
+
+def test2():
+    assert indexes_of([1,1,3,1,1,1,4], [1,1], 0) == [0,3,4]
+    assert indexes_of([1,1,3,1,1,1,4], [1,1], 2) == [3,4]
+    assert indexes_of([1,2,3,1,1,1,4], [1,2], 0) == [0]
+    #for x in generate_replacements([1,1,3,1,1,1,4], [1,1], [None,None]):
+    #    print(x)
+    assert [x[1] for x in generate_replacements([1,1,3,1,1,1,4], [1,1])] == [
+        [None,None,3,1,1,1,4],
+        [1,1,3,None,None,1,4],
+        [1,1,3,1,None,None,4],
+        [None,None,3,None,None,1,4],
+        [None,None,3,1,None,None,4],
+    ]
+    assert list(generate_substitution_candidates([1,1,3], 1)) == [[1], [1,1], [1,1,3]]
+    assert list(generate_substitution_candidates([1,1,None], 1)) == [[1], [1,1]]
+    assert list(generate_substitution_candidates([None,1,3], 1)) == [[1], [1,3]]
+    example = 'R,8,R,8,R,4,R,4,R,8,L,6,L,2,R,4,R,4,R,8,R,8,R,8,L,6,L,2'.split(',')
+    candidates = list(generate_solution_candidates(example))
+    #print(candidates)
+    assert ('A,B,C,B,A,C', 'R,8,R,8', 'R,4,R,4,R,8', 'L,6,L,2') in candidates
+
+test2()
+
 def main():
     program = [int(x) for x in sys.stdin.read().strip().split(',')]
     solve_map(program)
 
-main()
+def main2():
+    path = 'L,12,L,6,L,8,R,6,L,8,L,8,R,4,R,6,R,6,L,12,L,6,L,8,R,6,L,8,L,8,R,4,R,6,R,6,L,12,R,6,L,8,L,12,R,6,L,8,L,8,L,8,R,4,R,6,R,6,L,12,L,6,L,8,R,6,L,8,L,8,R,4,R,6,R,6,L,12,R,6,L,8'.split(',')
+    candidates = list(generate_solution_candidates(path))
+    assert len(candidates) == 1
+    print(candidates[0])
+    program = [int(x) for x in sys.stdin.read().strip().split(',')]
+    assert program[0] == 1
+    program[0] = 2
+    program_input = '\n'.join(candidates[0]) + '\nn\n'
+    print(program_input)
+    program_input = [ord(x) for x in program_input]
+    print(program_input)
+    output = run_output(program, program_input)
+    #print(output)
+    print(''.join(chr(x) for x in output[:-1]))
+    print(output[-1])
+
+
+#main()
+main2()
