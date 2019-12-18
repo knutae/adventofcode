@@ -14,11 +14,11 @@ class Dungeon(typing.NamedTuple):
     grid: typing.List[typing.List[str]]
     width: int
     height: int
-    start_positions: typing.Sequence[Position]
+    start_positions: typing.FrozenSet[Position]
     all_keys: typing.FrozenSet[str]
 
 class MultiSearchKey(typing.NamedTuple):
-    robots: typing.FrozenSet[typing.Tuple[Position, int]]
+    robots: typing.FrozenSet[Position]
     keys: typing.FrozenSet[str]
 
 KEY_RANGE = range(ord('a'), ord('z')+1)
@@ -39,13 +39,13 @@ def parse(s):
     width = len(grid[0])
     height = len(grid)
     all_keys = set()
-    start_positions = []
+    start_positions = set()
     for y, line in enumerate(grid):
         assert len(line) == width
         for x, c in enumerate(line):
             if c == '@':
                 assert Position(x, y) not in start_positions
-                start_positions.append(Position(x, y))
+                start_positions.add(Position(x, y))
             elif is_key(c):
                 assert c not in all_keys
                 all_keys.add(c)
@@ -54,7 +54,7 @@ def parse(s):
         grid=grid,
         width=width,
         height=height,
-        start_positions=start_positions,
+        start_positions=frozenset(start_positions),
         all_keys=frozenset(all_keys),
     )
 
@@ -86,7 +86,7 @@ def enumerate_moves(grid, key: SearchKey):
 
 def solve(dungeon: Dungeon):
     assert len(dungeon.start_positions) == 1
-    start = SearchKey(dungeon.start_positions[0], frozenset())
+    start = SearchKey(next(iter(dungeon.start_positions)), frozenset())
     target_keys = dungeon.all_keys
     grid = dungeon.grid
     visited = {start}
@@ -106,51 +106,58 @@ def solve(dungeon: Dungeon):
         visited |= new_keys
 
 def move_robot(key: MultiSearchKey, old_pos: Position, new_pos: Position, new_keys: typing.FrozenSet[str]):
-    robots = dict(key.robots)
-    old_count = robots[old_pos]
-    assert old_count > 0
-    if old_count == 1:
-        del robots[old_pos]
-    else:
-        robots[old_pos] = old_count - 1
-    if new_pos in robots:
-        robots[new_pos] += 1
-    else:
-        robots[new_pos] = 1
-    return MultiSearchKey(frozenset(robots.items()), new_keys)
+    robots = set(key.robots)
+    assert old_pos in robots
+    assert new_pos not in robots
+    robots.remove(old_pos)
+    robots.add(new_pos)
+    return MultiSearchKey(frozenset(robots), new_keys)
 
-def enumerate_multi_moves(grid, key: MultiSearchKey):
-    for robot_pos, robot_count in key.robots:
-        assert robot_count > 0
-        x, y = robot_pos
-        for nx, ny in [(x-1, y), (x+1, y), (x, y-1), (x, y+1)]:
-            pos = Position(nx, ny)
-            keys = try_move_to(grid, key.keys, pos)
-            if keys is not None:
-                yield move_robot(key, robot_pos, pos, keys)
+def enumerate_multi_moves_from_pos(robot_pos, grid, key: MultiSearchKey):
+    x, y = robot_pos
+    for nx, ny in [(x-1, y), (x+1, y), (x, y-1), (x, y+1)]:
+        pos = Position(nx, ny)
+        if pos in key.robots:
+            continue
+        keys = try_move_to(grid, key.keys, pos)
+        if keys is not None:
+            yield move_robot(key, robot_pos, pos, keys), pos
+
+def enumerate_all_multi_moves(grid, key: MultiSearchKey):
+    for pos in key.robots:
+        for move in enumerate_multi_moves_from_pos(pos, grid, key):
+            yield move
 
 def solve_multi(dungeon: Dungeon):
     assert len(dungeon.start_positions) > 1
-    start_robots = frozenset((pos, 1) for pos in dungeon.start_positions)
-    start = MultiSearchKey(start_robots, frozenset())
+    start = MultiSearchKey(dungeon.start_positions, frozenset())
     target_keys = dungeon.all_keys
     grid = dungeon.grid
     visited = {start}
-    current_keys = {start}
+    current_keys = {start: None}
     steps = 0
     while True:
         steps += 1
-        new_keys = set()
-        for key in current_keys:
-            for move in enumerate_multi_moves(grid, key):
+        new_keys = dict()
+        for key, pos_or_none in current_keys.items():
+            if pos_or_none is None:
+                generator = enumerate_all_multi_moves(grid, key)
+            else:
+                generator = enumerate_multi_moves_from_pos(pos_or_none, grid, key)
+            for move, new_pos in generator:
                 if move not in visited:
-                    new_keys.add(move)
                     if move.keys == target_keys:
                         print(f"Solved: {move}, {steps} steps")
                         return steps
+                    if move.keys == key.keys:
+                        # keys did not change, only continue search with the same robot, identified by its position
+                        new_keys[move] = new_pos
+                    else:
+                        # keys changes, continue search with all robots
+                        new_keys[move] = None
         current_keys = new_keys
-        visited |= new_keys
-        #print(f"Step {steps} new keys {len(current_keys)} visited {len(visited)}")
+        visited |= new_keys.keys()
+        print(f"Step {steps} new keys {len(current_keys)} visited {len(visited)}")
 
 def test():
     assert solve(parse('''
@@ -236,4 +243,4 @@ def main_multi():
 test()
 test_multi()
 #main()
-#main_multi()
+main_multi()
