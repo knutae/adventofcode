@@ -196,29 +196,11 @@ def solve(program, width, height):
     print(counter)
     return counter
 
-def min_x_at(program, y):
-    #low = y * 50 // 100
-    low = 0
-    high = y * 60 // 100
-    assert hit(program, low, y) == 0
-    assert hit(program, high, y) == 1
-    while low < high - 1:
-        x = (low + high) // 2
-        if hit(program, x, y):
-            high = x
-        else:
-            low = x
-    x = high
-    assert hit(program, x, y)
-    assert not hit(program, x-1, y)
-    return x
-
 def min_y_at(program, x):
-    #low = x * 100 // 60
-    low = 0
-    high = x * 100 // 60
-    assert hit(program, x, low) == 0
-    assert hit(program, x, high) == 1
+    low = x * 100 // 68
+    high = x * 100 // 66
+    #assert hit(program, x, low) == 0
+    #assert hit(program, x, high) == 1
     while low < high - 1:
         y = (low + high) // 2
         if hit(program, x, y):
@@ -226,8 +208,8 @@ def min_y_at(program, x):
         else:
             low = y
     y = high
-    assert hit(program, x, y)
-    assert not hit(program, x, y-1)
+    #assert hit(program, x, y)
+    #assert not hit(program, x, y-1)
     return y
 
 def verify_solution(program, x, y):
