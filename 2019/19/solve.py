@@ -177,19 +177,89 @@ def test():
 
 test()
 
+def hit(program, x, y):
+    r = run_output(program, [x, y])
+    #assert len(r) == 1
+    #assert r[0] in (0,1)
+    return r[0]
+
 def solve(program, width, height):
     counter = 0
     for y in range(height):
+        line = []
         for x in range(width):
-            r = run_output(program, [x, y])
-            assert len(r) == 1
-            assert r[0] in (0,1)
-            counter += r[0]
+            r = hit(program, x, y)
+            counter += r
+            line.append('#' if r else '.')
+        print(''.join(line))
+    print(line.index('#'))
     print(counter)
     return counter
 
+def min_x_at(program, y):
+    #low = y * 50 // 100
+    low = 0
+    high = y * 60 // 100
+    assert hit(program, low, y) == 0
+    assert hit(program, high, y) == 1
+    while low < high - 1:
+        x = (low + high) // 2
+        if hit(program, x, y):
+            high = x
+        else:
+            low = x
+    x = high
+    assert hit(program, x, y)
+    assert not hit(program, x-1, y)
+    return x
+
+def min_y_at(program, x):
+    #low = x * 100 // 60
+    low = 0
+    high = x * 100 // 60
+    assert hit(program, x, low) == 0
+    assert hit(program, x, high) == 1
+    while low < high - 1:
+        y = (low + high) // 2
+        if hit(program, x, y):
+            high = y
+        else:
+            low = y
+    y = high
+    assert hit(program, x, y)
+    assert not hit(program, x, y-1)
+    return y
+
+def verify_solution(program, x, y):
+    assert hit(program, x, y)
+    assert hit(program, x+99, y)
+    assert hit(program, x, y+99)
+    assert not hit(program, x+100, y)
+    assert not hit(program, x, y+100)
+
+def is_valid_solution(program, x, y):
+    return (
+        hit(program, x, y) and
+        hit(program, x+99, y) and
+        hit(program, x, y+99) and
+        not hit(program, x+100, y) and
+        not hit(program, x, y+100)
+    )
+
+def solve2(program):
+    x = 100
+    while True:
+        #print(x)
+        y = min_y_at(program, x + 99)
+        if is_valid_solution(program, x, y):
+            break
+        x += 1
+    verify_solution(program, x, y)
+    result = x*10000 + y
+    print(x, y, result)
+
 def main():
     program = [int(x) for x in sys.stdin.read().strip().split(',')]
-    solve(program, 50, 50)
+    solve2(program)
 
 main()
