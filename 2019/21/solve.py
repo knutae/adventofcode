@@ -180,19 +180,37 @@ test()
 def ascii_input(lines):
     return ArrayInput([ord(c) for c in '\n'.join(lines) + '\n'])
 
-def main():
-    program = [int(x) for x in sys.stdin.read().strip().split(',')]
-    input = ascii_input([
-        # jump if hole at A or C, and ground at D
-        # safe to ignore B?
-        'NOT C J', # hole at C
-        'NOT A T', # hole at A
-        'OR T J', # hole at A or C
-        'AND D J', # ground at D
-        'WALK',
-    ])
+WALK_INSTRUCTIONS = [
+    # jump if hole at A or C, and ground at D
+    # safe to ignore B?
+    'NOT C J', # hole at C
+    'NOT A T', # hole at A
+    'OR T J', # hole at A or C
+    'AND D J', # ground at D
+    'WALK',
+]
+
+RUN_INSTRUCTIONS = [
+    # base logic: jump if hole at A, B or C, and ground at D
+    # but also require ground at either E or H
+    'NOT C J', # hole at C
+    'NOT A T', # hole at A
+    'OR T J', # hole at A or C
+    'NOT B T', # hole at B
+    'OR T J', # hole at A, B or C
+    'AND D J', # ground at D
+
+    'NOT E T', # hole at E
+    'NOT T T', # ground at E
+    'OR H T', # ground at E or H
+    'AND T J',
+
+    'RUN',
+]
+
+def main(program, instructions):
     output_line = []
-    for c in run_yield(program, input):
+    for c in run_yield(program, ascii_input(instructions)):
         if c > 128:
             print(f'Non-ascii: {c}')
         elif c == 10:
@@ -201,4 +219,6 @@ def main():
         else:
             output_line.append(chr(c))
 
-main()
+program = [int(x) for x in sys.stdin.read().strip().split(',')]
+main(program, WALK_INSTRUCTIONS)
+main(program, RUN_INSTRUCTIONS)
