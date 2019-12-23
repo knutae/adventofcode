@@ -195,12 +195,19 @@ class NetworkInput:
         self.address = address
         self.local_queue = deque()
         self.local_queue.append(address)
+        self.idle = False
 
     def next(self):
         if len(self.local_queue) == 0:
+            self.idle = True
             return -1
         else:
+            self.idle = False
             return self.local_queue.popleft()
+
+    def extend(self, data):
+        self.idle = False
+        self.local_queue.extend(data)
 
 class Computer:
     def __init__(self, program, address):
@@ -219,6 +226,8 @@ def main():
         program = [int(x) for x in f.read().strip().split(',')]
 
     computers = [Computer(program, i) for i in range(50)]
+    nat_buffer = None
+    nat_last_delivered_y = None
     while True:
         for i, computer in enumerate(computers):
             assert len(computer.output_buffer) < 3
@@ -231,9 +240,22 @@ def main():
                 assert isinstance(y, int)
                 print(f'Computer {i} output: address={address} x={x} y={y}')
                 if address == 255:
-                    print(f'Result: {y}')
-                    return
-                assert address in range(50)
-                computers[address].input.local_queue.extend([x, y])
+                    #print(f'Result: {y}')
+                    nat_buffer = [x, y]
+                else:
+                    assert address in range(50)
+                    computers[address].input.extend([x, y])
+        if all(c.input.idle for c in computers):
+            if nat_buffer is None:
+                #print('All idle, but no NAT buffer')
+                continue
+            assert nat_buffer is not None
+            nat_y = nat_buffer[1]
+            if nat_y == nat_last_delivered_y:
+                print(f'Result: {nat_y}')
+                return
+            nat_last_delivered_y = nat_y
+            computers[0].input.extend(nat_buffer)
+            print(f'NAT delivered: {nat_buffer}')
 
 main()
