@@ -1,0 +1,47 @@
+     q
+     |
+     o-n
+     | |
+     p |         m
+       |         |
+     d f---g-----j
+     | |   |     |
+     | |   |  -S |
+     | |   |   | |
+     c-e i-h   l-k
+     |
+   a-b
+     |
+     E
+
+E: escape pod
+a: hull breach
+b: hallway
+c: engineering
+d: warp drive maintenance (spool of cat6)
+e: hot chocolate fountain (mug)
+f: kitchen
+g: sick bay (sand)
+h: stables
+i: navigation (prime number)
+j: crew quarters [giant electromagnet]
+k: holodeck (tambourine)
+l: arcade (festive hat)
+S: security checkpoint
+m: storage [photons]
+n: corridor [infinite loop]
+o: science lab (asterisk)
+p: obsevatory (monolith)
+q: gift wrapping center [molten lava]
+
+
+
+Items in your inventory:
+- prime number
+- spool of cat6
+- festive hat
+- monolith
+- mug
+- asterisk
+- sand
+- tambourine
