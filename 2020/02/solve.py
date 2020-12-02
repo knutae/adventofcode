@@ -24,8 +24,21 @@ def solve1(input):
     #print(valid, invalid)
     return valid
 
+def solve2(input):
+    valid = 0
+    invalid = 0
+    for (a, b, letter, password) in input:
+        if (password[a-1] == letter) != (password[b-1] == letter):
+            valid += 1
+        else:
+            invalid += 1
+    #print(valid, invalid)
+    return valid
+
 assert parse_line('1-3 a: abcde') == (1, 3, 'a', 'abcde')
 assert solve1(parse(TEST_INPUT)) == 2
+assert solve2(parse(TEST_INPUT)) == 1
 with open('input') as f:
     input = parse(f.read())
 print(solve1(input))
+print(solve2(input))
