@@ -10,6 +10,16 @@ faded blue bags contain no other bags.
 dotted black bags contain no other bags.
 '''
 
+EXAMPLE2 = '''
+shiny gold bags contain 2 dark red bags.
+dark red bags contain 2 dark orange bags.
+dark orange bags contain 2 dark yellow bags.
+dark yellow bags contain 2 dark green bags.
+dark green bags contain 2 dark blue bags.
+dark blue bags contain 2 dark violet bags.
+dark violet bags contain no other bags.
+'''
+
 def parse_n_bags(s):
     words = s.split(' ')
     assert len(words) == 4
@@ -49,10 +59,26 @@ def can_contain_shiny_gold(bag, bag_map):
 def solve1(bag_map):
     return sum(1 for bag in bag_map if can_contain_shiny_gold(bag, bag_map))
 
+def count_total_bags(bag, bag_map, cache):
+    if bag in cache:
+        return cache[bag]
+    total = 1 # self
+    contents = bag_map[bag]
+    for content_bag, count in contents.items():
+        total += count * count_total_bags(content_bag, bag_map, cache)
+    cache[bag] = total
+    return total
+
+def solve2(bag_map):
+    return count_total_bags('shiny gold', bag_map, dict()) - 1
+
 bag_map = parse(EXAMPLE)
 #print(bag_map)
 assert solve1(bag_map) == 4
+assert solve2(bag_map) == 32
+assert solve2(parse(EXAMPLE2)) == 126
 
 with open('input') as f:
     bag_map = parse(f.read())
 print(solve1(bag_map))
+print(solve2(bag_map))
