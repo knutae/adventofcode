@@ -31,11 +31,33 @@ def solve1(numbers, length=25):
             return numbers[index]
     assert False
 
-assert solve1(
-    [35,20,15,25,47,40,62,55,65,95,102,117,150,182,127,219,299,277,309,576],
-    length=5) == 127
+numbers = [35,20,15,25,47,40,62,55,65,95,102,117,150,182,127,219,299,277,309,576]
+assert solve1(numbers, length=5) == 127
+
+def find_sum(numbers, index, target_sum):
+    sum = numbers[index]
+    end = index
+    while sum < target_sum:
+        end += 1
+        sum += numbers[end]
+    if sum == target_sum and end > index:
+        return numbers[index:end+1]
+    else:
+        return None
+
+def solve2(numbers, length=25):
+    target_sum = solve1(numbers, length)
+    for index in range(len(numbers) - 2):
+        r = find_sum(numbers, index, target_sum)
+        if r is not None:
+            print(r)
+            return min(r) + max(r)
+    assert False
+
+assert solve2(numbers, 5) == 62
 
 with open('input') as f:
     numbers = [int(line) for line in f.read().strip().split('\n')]
 
 print(solve1(numbers))
+print(solve2(numbers))
