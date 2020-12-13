@@ -45,8 +45,40 @@ def solve1(instructions):
     #print(position)
     return abs(position[0]) + abs(position[1])
 
+def rotate_waypoint_left(waypoint, degrees):
+    a = degrees // 90
+    x, y = waypoint
+    while a != 0:
+        x, y = -y, x
+        a -= 1
+        assert a >= 0
+    return x, y
+
+def rotate_waypoint_right(waypoint, degrees):
+    return rotate_waypoint_left(waypoint, 360 - degrees)
+
+def solve2(instructions):
+    position = (0,0)
+    waypoint = (10, 1)
+    for action, value in instructions:
+        if action == 'F':
+            position = move(position, waypoint, value)
+        elif action == 'R':
+            waypoint = rotate_waypoint_right(waypoint, value)
+        elif action == 'L':
+            waypoint = rotate_waypoint_left(waypoint, value)
+        else:
+            #print(action, value)
+            assert action in DIRECTIONS
+            waypoint = move(waypoint, DIRECTIONS[action], value)
+        #print(action, value, "->", position, waypoint)
+    #print(position)
+    return abs(position[0]) + abs(position[1])
+
 assert solve1(parse(EXAMPLE)) == 25
+assert solve2(parse(EXAMPLE)) == 286
 
 with open('input') as f:
     instructions = parse(f.read())
 print(solve1(instructions))
+print(solve2(instructions))
