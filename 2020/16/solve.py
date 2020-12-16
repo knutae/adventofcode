@@ -54,7 +54,39 @@ def solve1(input):
 
 assert solve1(EXAMPLE) == 71
 
+def detect_field_order(fields, your_ticket, nearby_tickets):
+    valid_tickets = [ticket for ticket in nearby_tickets if all(valid_for_any_field(n, fields) for n in ticket)]
+    index_candidates = [
+        {field for field in fields if all(valid_field_value(ticket[i], fields[field]) for ticket in valid_tickets)}
+        for i in range(len(fields))
+    ]
+    #print(index_candidates)
+    while any(len(c) > 1 for c in index_candidates):
+        for c in index_candidates:
+            if len(c) == 1:
+                c = next(iter(c))
+                for d in index_candidates:
+                    if len(d) > 1 and c in d:
+                        d.remove(c)
+    #print(index_candidates)
+    return [next(iter(c)) for c in index_candidates]
+
+assert detect_field_order(*parse(EXAMPLE)) == ['row', 'class', 'seat']
+
+def solve2(input):
+    fields, your_ticket, nearby_tickets = parse(input)
+    field_order = detect_field_order(fields, your_ticket, nearby_tickets)
+    #print(field_order)
+    mult = 1
+    for i, field in enumerate(field_order):
+        if field.startswith('departure'):
+            value = your_ticket[i]
+            print(f'{field}: {value}')
+            mult *= value
+    return mult
+
 with open('input') as f:
     input = f.read()
 
 print(solve1(input))
+print(solve2(input))
