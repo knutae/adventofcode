@@ -6,11 +6,11 @@ def previous_cup(cup, max):
 
 class Cups:
     def __init__(self, cups):
-        # cup node: [prev_index, next_index]. the list index is the label
-        self.nodes = [[None, None] for i in range(len(cups) + 1)]
-        # circular list: initialize a sentinel node
+        # for each cup label (index), maintain the label of the next cup
+        self.next_cups = [None for i in range(len(cups) + 1)]
+        # circular singly linked list: initialize a sentinel node
         self.current_cup = cups[0]
-        self.nodes[self.current_cup] = [self.current_cup, self.current_cup]
+        self.next_cups[self.current_cup] = self.current_cup
         # ... then insert the rest
         prev_cup = self.current_cup
         for cup in cups[1:]:
@@ -18,45 +18,30 @@ class Cups:
             prev_cup = cup
 
     def insert_after(self, before, cup):
-        assert cup >= 1 and cup < len(self.nodes)
-        cup_node = self.nodes[cup]
-        assert cup_node == [None, None], f"Cup {cup} already present"
-        before_node = self.nodes[before]
-        after = before_node[1]
-        after_node = self.nodes[after]
-        cup_node[0] = before
-        cup_node[1] = after
-        before_node[1] = cup
-        after_node[0] = cup
-
-    def _last_cup(self):
-        self.nodes[self.current_cup][0]
-
-    def append(self, cup):
-        last = self.nodes[self.current_cup][0]
-        self.insert_after(last, cup)
+        assert cup >= 1 and cup < len(self.next_cups)
+        assert self.next_cups[cup] is None, f"Cup {cup} already present"
+        after = self.next_cups[before]
+        self.next_cups[before] = cup
+        self.next_cups[cup] = after
 
     def after(self, cup):
-        r = self.nodes[cup][1]
+        r = self.next_cups[cup]
         assert r is not None
         return r
 
-    def remove(self, cup):
-        assert cup != self.current_cup
-        node = self.nodes[cup]
-        assert None not in node
-        [before, after] = node
-        self.nodes[before][1] = after
-        self.nodes[after][0] = before
-        node[0] = None
-        node[1] = None
+    def remove_after(self, cup):
+        after = self.next_cups[cup]
+        assert after != self.current_cup
+        self.next_cups[cup] = self.next_cups[after]
+        self.next_cups[after] = None
+        return after
 
     def __iter__(self):
         first = self.current_cup
         current = first
         while True:
             yield current
-            current = self.nodes[current][1]
+            current = self.next_cups[current]
             if current == first:
                 return
 
@@ -65,13 +50,10 @@ class Cups:
         return f'Cups([{tmp}])'
 
     def step(self):
-        a = self.after(self.current_cup)
-        b = self.after(a)
-        c = self.after(b)
-        self.remove(a)
-        self.remove(b)
-        self.remove(c)
-        max = len(self.nodes) - 1
+        a = self.remove_after(self.current_cup)
+        b = self.remove_after(self.current_cup)
+        c = self.remove_after(self.current_cup)
+        max = len(self.next_cups) - 1
         dest_cup = previous_cup(self.current_cup, max)
         while dest_cup in (a,b,c):
             dest_cup = previous_cup(dest_cup, max)
