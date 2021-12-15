@@ -38,20 +38,54 @@ def step(grid, costs):
                 updated = True
     return updated
 
-def solve1(data):
-    grid = parse(data)
+def solve_grid(grid, verbose=False):
     h = len(grid)
     w = len(grid[0])
     target = (w-1, h-1)
     costs = {(0,0): 0}
+    i = 0
     while step(grid, costs):
-        pass
+        i += 1
+        if verbose:
+            print(f'{i}: {len(costs)} vs {w*h}')
     #print(costs)
     return costs[target]
 
+def solve1(data):
+    return solve_grid(parse(data))
+
 assert solve1(EXAMPLE) == 40
+
+def inc(n, i):
+    return 1+(n+i-1)%9
+
+assert inc(9, 0) == 9
+assert inc(9, 1) == 1
+assert inc(5, 6) == 2
+
+def extend_grid(grid):
+    h = len(grid)
+    w = len(grid[0])
+    new_grid = []
+    for y in range(h*5):
+        line = []
+        ydiv = y // h
+        ymod = y % h
+        for x in range(w*5):
+            xdiv = x // w
+            xmod = x % w
+            line.append(inc(grid[ymod][xmod], xdiv + ydiv))
+        new_grid.append(line)
+    return new_grid
+
+def solve2(data):
+    grid = extend_grid(parse(data))
+    return solve_grid(grid, verbose=True)
+
+assert solve2(EXAMPLE) == 315
 
 with open('input') as f:
     puzzle_input = f.read()
 
 print(solve1(puzzle_input))
+print(solve2(puzzle_input))
