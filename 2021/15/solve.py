@@ -27,27 +27,25 @@ def adjacent(grid, x, y):
     if y < h-1:
         yield x, y+1
 
-def step(grid, costs):
-    updated = False
-    for x0, y0 in dict(costs):
+def step(grid, costs, last_updated):
+    new_updated = []
+    for x0, y0 in last_updated:
         c0 = costs[(x0, y0)]
         for x1, y1 in adjacent(grid, x0, y0):
             c1 = grid[y1][x1] + c0
             if (x1, y1) not in costs or c1 < costs[(x1, y1)]:
                 costs[(x1, y1)] = c1
-                updated = True
-    return updated
+                new_updated.append((x1, y1))
+    return new_updated
 
-def solve_grid(grid, verbose=False):
+def solve_grid(grid):
     h = len(grid)
     w = len(grid[0])
     target = (w-1, h-1)
     costs = {(0,0): 0}
-    i = 0
-    while step(grid, costs):
-        i += 1
-        if verbose:
-            print(f'{i}: {len(costs)} vs {w*h}')
+    last_updated = [(0,0)]
+    while last_updated:
+        last_updated = step(grid, costs, last_updated)
     #print(costs)
     return costs[target]
 
@@ -80,7 +78,7 @@ def extend_grid(grid):
 
 def solve2(data):
     grid = extend_grid(parse(data))
-    return solve_grid(grid, verbose=True)
+    return solve_grid(grid)
 
 assert solve2(EXAMPLE) == 315
 
