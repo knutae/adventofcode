@@ -67,11 +67,9 @@ def extend_grid(grid):
     new_grid = []
     for y in range(h*5):
         line = []
-        ydiv = y // h
-        ymod = y % h
+        ydiv, ymod = divmod(y, h)
         for x in range(w*5):
-            xdiv = x // w
-            xmod = x % w
+            xdiv, xmod = divmod(x, w)
             line.append(inc(grid[ymod][xmod], xdiv + ydiv))
         new_grid.append(line)
     return new_grid
