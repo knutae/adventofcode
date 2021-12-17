@@ -51,7 +51,7 @@ def hits_target_range(velocity, xrange, yrange):
 def solve1(data):
     xrange, yrange = parse(data)
     result = 0
-    # how to detect the search range?
+    # how to detect the max y velocity?
     for vy in range(200):
         hits, highest_y = hits_target_yrange((0, vy), yrange)
         if hits:
@@ -62,11 +62,11 @@ def solve1(data):
 def solve2(data):
     xrange, yrange = parse(data)
     result = list()
-    # how to detect the search ranges?
-    for vy in range(-200, 200):
+    # how to detect the max y velocity?
+    for vy in range(min(yrange), 200):
         if not hits_target_yrange((0, vy), yrange)[0]:
             continue
-        for vx in range(-50, 350):
+        for vx in range(min(1, *xrange), max(0, *xrange)+1):
             if hits_target_range((vx, vy), xrange, yrange):
                 result.append((vx, vy))
     #print(len(result), result)
