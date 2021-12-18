@@ -81,7 +81,7 @@ def explode(sn):
         candidate = recursive_get(sn, index)
         if isinstance(candidate, int):
             continue
-        left, right = recursive_get(sn, index)
+        left, right = candidate
         result = recursive_set(sn, index, 0)
         if index > 0:
             result = recursive_set(result, index - 1, left + recursive_get(result, index - 1))
