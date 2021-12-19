@@ -87,12 +87,12 @@ def try_reorient(scanner1, scanner2):
                 assert overlap_count > 0
                 #print(f'Move {amount}: {overlap_count} overlap')
                 if overlap_count >= 12:
-                    return translated
-    return None
+                    return amount, translated
+    return None, None
 
 def test_reorient():
     scanners = parse_file('example')
-    reorient1 = try_reorient(scanners[0], scanners[1])
+    _, reorient1 = try_reorient(scanners[0], scanners[1])
     assert reorient1 is not None
     overlap = set(reorient1) & set(scanners[0])
     assert len(overlap) == 12
@@ -113,27 +113,44 @@ def test_reorient():
 
 test_reorient()
 
-def solve1(scanners):
+def reorient_all(scanners):
     reoriented = [scanners[0]]
     remaining = scanners[1:]
+    translate_amounts = [(0,0,0)]
     while len(remaining) > 0:
         found_index = None
         for i, candidate in enumerate(remaining):
             for r in reoriented:
-                reoriented_candidate = try_reorient(r, candidate)
+                amount, reoriented_candidate = try_reorient(r, candidate)
                 if reoriented_candidate is not None:
                     reoriented.append(reoriented_candidate)
+                    translate_amounts.append(amount)
                     found_index = i
                     break
             if found_index is not None:
                 break
         assert found_index is not None
         del remaining[found_index]
+    return translate_amounts, reoriented
+
+def solve1(scanners):
+    _, reoriented = reorient_all(scanners)
     all_beacons = set()
     for r in reoriented:
         all_beacons |= set(r)
     #print(all_beacons)
     return len(all_beacons)
 
+def manhattan_distance(a, b):
+    x0,y0,z0 = a
+    x1,y1,z1 = b
+    return abs(x0-x1)+abs(y0-y1)+abs(z0-z1)
+
+def solve2(scanners):
+    translate_amounts, _ = reorient_all(scanners)
+    return max(manhattan_distance(a, b) for a in translate_amounts for b in translate_amounts if a != b)
+
 assert solve1(parse_file('example')) == 79
+assert solve2(parse_file('example')) == 3621
 print(solve1(parse_file('input')))
+print(solve2(parse_file('input')))
