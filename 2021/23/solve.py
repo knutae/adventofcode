@@ -43,52 +43,49 @@ def positions_between(pos1, pos2):
     hx, hy = hallway
     rx, ry = room
     assert hy == 0
-    assert ry in (1,2)
-    # generate outer room position if needed
-    if ry == 2:
-        yield rx,1
+    assert ry > 0
+    # generate room positions
+    for y in range(1, ry):
+        yield rx,y
     # generate hallway positions, except the position right outside the room (it's always empty anyway)
     for x in range(min(rx, hx)+1, max(rx, hx)):
         yield x,0
 
 HALLWAY_POSITIONS = [(0,0),(1,0),(3,0),(5,0),(7,0),(9,0),(10,0)]
 ENERGY_COST = {'A': 1, 'B': 10, 'C': 100, 'D': 1000}
-TARGET_PODS = {
-    'A': {(2,1),(2,2)},
-    'B': {(4,1),(4,2)},
-    'C': {(6,1),(6,2)},
-    'D': {(8,1),(8,2)},
-}
 
-def valid_moves(pods):
+def target_pods(room_depth):
+    pods = dict()
+    for pod, x in zip('ABCD', (2,4,6,8)):
+        pods[pod] = {(x,y) for y in range(1, room_depth+1)}
+    return pods
+
+def valid_moves(pods, room_depth):
     reverse_map = dict()
     for pod, positions in pods.items():
         for pos in positions:
             reverse_map[pos] = pod
+    room_y_range = range(1, room_depth+1)
     for pod, pod_positions in pods.items():
         pod_index = ord(pod) - ord('A')
         target_room_x = 2 + pod_index*2
-        inner_room_position = (target_room_x, 2)
-        outer_room_position = (target_room_x, 1)
+        target_room_is_ready = all(reverse_map.get((target_room_x, y), pod) == pod for y in room_y_range)
         for source_pos in pod_positions:
             x, y = source_pos
             if y == 0:
                 # in hallway: the only valid move is into the correct room
-                if inner_room_position not in reverse_map:
-                    target_pos = inner_room_position
-                elif reverse_map[inner_room_position] == pod and outer_room_position not in reverse_map:
-                    target_pos = outer_room_position
-                else:
+                if not target_room_is_ready:
                     # the target room is not accessible
-                    break
+                    continue
+                target_pos = max((target_room_x, target_y) for target_y in room_y_range if (target_room_x, target_y) not in reverse_map)
                 if any(p in reverse_map for p in positions_between(source_pos, target_pos)):
                     # no path to target room
-                    break
+                    continue
                 # yay, found a valid move to the target room
                 yield pod, source_pos, target_pos
             else:
-                assert y in (1,2) # in a room
-                if x == target_room_x and inner_room_position in pod_positions:
+                assert y > 0 # in a room
+                if x == target_room_x and target_room_is_ready:
                     #print(f'No valid moves for {pod} at {source_pos}')
                     # already at correct room, no valid moves
                     continue
@@ -101,18 +98,18 @@ def valid_moves(pods):
                     # valid hallway move
                     yield pod, source_pos, target_pos
 
-assert len(list(valid_moves(parse(EXAMPLE)))) == 28
+assert len(list(valid_moves(parse(EXAMPLE), 2))) == 28
 
 def move_cost(pod, source_pos, target_pos):
     manhattan_distance = abs(source_pos[0] - target_pos[0]) + abs(source_pos[1] - target_pos[1])
     return manhattan_distance * ENERGY_COST[pod]
 
-def search_step(prev_states, all_states, all_paths):
+def search_step(prev_states, all_states, all_paths, room_depth):
     next_states = set()
     for state in prev_states:
         assert state in all_states
         pods = to_position_map(state)
-        for pod, source_pos, target_pos in valid_moves(pods):
+        for pod, source_pos, target_pos in valid_moves(pods, room_depth):
             new_pods = {pod: set(positions) for pod, positions in pods.items()}
             new_pods[pod].remove(source_pos)
             new_pods[pod].add(target_pos)
@@ -127,7 +124,7 @@ def search_step(prev_states, all_states, all_paths):
             all_paths[new_state] = state
     return next_states
 
-def print_state(state):
+def print_state(state, room_depth):
     pods = to_position_map(state)
     reverse_map = dict()
     for pod, positions in pods.items():
@@ -138,29 +135,72 @@ def print_state(state):
     print('\n#############')
     hallway = ''.join(pod_at(i,0) for i in range(11))
     print(f'#{hallway}#')
-    print(f'###{pod_at(2,1)}#{pod_at(4,1)}#{pod_at(6,1)}#{pod_at(8,1)}###')
-    print(f'  #{pod_at(2,2)}#{pod_at(4,2)}#{pod_at(6,2)}#{pod_at(8,2)}#')
+    for y in range(1, room_depth+1):
+        pad = '##' if y == 1 else '  '
+        print(f'{pad}#{pod_at(2,y)}#{pod_at(4,y)}#{pod_at(6,y)}#{pod_at(8,y)}#{pad}')
     print('  #########\n')
 
-def print_path(all_paths, state):
+def print_path(all_paths, state, room_depth):
     if state in all_paths:
-        print_path(all_paths, all_paths[state])
-    print_state(state)
+        print_path(all_paths, all_paths[state], room_depth)
+    print_state(state, room_depth)
 
-def solve1(data):
-    pods = parse(data)
+def solve(pods, room_depth, verbose=False):
     #print_state(to_hashable_state(pods))
     all_states = {to_hashable_state(pods): 0}
     all_paths = dict()
     prev_states = set(all_states.keys())
-    target_state = to_hashable_state(TARGET_PODS)
+    target_state = to_hashable_state(target_pods(room_depth))
+    if verbose:
+        print_state(to_hashable_state(pods), room_depth)
+        print_state(target_state, room_depth)
     while len(prev_states) > 0:
-        next_states = search_step(prev_states, all_states, all_paths)
-        #print(f'prev {len(prev_states)} next {len(next_states)} all {len(all_states)}')
+        next_states = search_step(prev_states, all_states, all_paths, room_depth)
+        if verbose:
+            print(f'prev {len(prev_states)} next {len(next_states)} all {len(all_states)}')
         prev_states = next_states
     assert target_state in all_states
-    #print_path(all_paths, target_state)
+    if verbose:
+        print_path(all_paths, target_state, room_depth)
+        print(all_states[target_state])
     return all_states[target_state]
+
+def solve1(data):
+    pods = parse(data)
+    return solve(pods, 2)
+
+def insert_folded_rows(pods):
+    new_pods = defaultdict(set)
+    for pod, positions in pods.items():
+        for x, y in positions:
+            if y <= 1:
+                new_pods[pod].add((x,y))
+            else:
+                assert y == 2
+                new_pods[pod].add((x,4))
+    # insert rows 2 and 3:
+    #  #D#C#B#A#
+    #  #D#B#A#C#
+    new_pods['D'].add((2,2))
+    new_pods['C'].add((4,2))
+    new_pods['B'].add((6,2))
+    new_pods['A'].add((8,2))
+
+    new_pods['D'].add((2,3))
+    new_pods['B'].add((4,3))
+    new_pods['A'].add((6,3))
+    new_pods['C'].add((8,3))
+
+    #print_state(to_hashable_state(pods), 2)
+    #print_state(to_hashable_state(new_pods), 4)
+    return new_pods
+
+def solve2(data):
+    pods = parse(data)
+    pods = insert_folded_rows(pods)
+    return solve(pods, 4)
 
 assert solve1(EXAMPLE) == 12521
 print(solve1(PUZZLE_INPUT))
+assert solve2(EXAMPLE) == 44169
+print(solve2(PUZZLE_INPUT))
