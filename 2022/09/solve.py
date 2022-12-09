@@ -9,6 +9,17 @@ L 5
 R 2
 '''
 
+LARGER_TEST_INPUT = '''
+R 5
+U 8
+L 8
+D 3
+R 17
+D 10
+L 25
+U 20
+'''
+
 DIRECTIONS = {
     'R': (1, 0),
     'L': (-1, 0),
@@ -49,9 +60,25 @@ def solve1(input):
             tail_visited.add(tail_pos)
     return len(tail_visited)
 
+def solve2(input):
+    rope = [(0,0) for _ in range(10)]
+    tail_visited = {(0,0)}
+    for dir, steps in parse(input):
+        for _ in range(steps):
+            new_rope = [move_head(rope[0], dir)]
+            for pos in rope[1:]:
+                new_rope.append(move_tail(pos, new_rope[-1]))
+            rope = new_rope
+            assert len(rope) == 10
+            tail_visited.add(rope[-1])
+    return len(tail_visited)
+
 assert solve1(TEST_INPUT) == 13
+assert solve2(TEST_INPUT) == 1
+assert solve2(LARGER_TEST_INPUT) == 36
 
 with open('input') as f:
     input = f.read()
 
 print(solve1(input))
+print(solve2(input))
