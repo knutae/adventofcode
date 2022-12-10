@@ -174,10 +174,29 @@ def solve1(input):
             timeline.append(x + n)
     return sum(i*timeline[i-1] for i in range(20,len(timeline)+1,40))
 
+def solve2(input):
+    timeline = [1]
+    for n in parse(input):
+        x = timeline[-1]
+        if n is None:
+            timeline.append(x)
+        else:
+            timeline.append(x)
+            timeline.append(x + n)
+    screen = []
+    for cycle, x in enumerate(timeline[:-1]):
+        pos = cycle % 40
+        screen.append('#' if abs(pos - x) <= 1 else '.')
+        if pos == 39:
+            screen.append('\n')
+    return ''.join(screen)
+
 solve1(SMALL_EXAMPLE)
 assert solve1(BIG_EXAMPLE) == 13140
+print(solve2(BIG_EXAMPLE))
 
 with open('input') as f:
     input = f.read()
 
 print(solve1(input))
+print(solve2(input))
