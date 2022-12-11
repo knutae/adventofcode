@@ -1,5 +1,6 @@
 from collections import deque
 from dataclasses import dataclass
+from math import gcd
 from typing import Callable
 
 EXAMPLE = '''
@@ -76,13 +77,15 @@ def parse_monkey(input):
 def parse(input):
     return [parse_monkey(x) for x in input.strip().split('\n\n')]
 
-def run_round(monkeys, items, inspected_counts):
+def run_round(monkeys, items, inspected_counts, divisor=3, modulo=None):
     for i, monkey in enumerate(monkeys):
         while len(items[i]) > 0:
             inspected_counts[i] += 1
             item = items[i].popleft()
             item = monkey.operation(item)
-            item //= 3
+            item //= divisor
+            if modulo:
+                item %= modulo
             if item % monkey.divisible_by == 0:
                 target = monkey.then_to
             else:
@@ -100,13 +103,31 @@ def solve1(input):
     inspected_counts = [0 for _ in monkeys]
     for _ in range(20):
         run_round(monkeys, items, inspected_counts)
-        #print_items(round, items)
+        #print_items(round + 1, items)
+    sorted_counts = list(sorted(inspected_counts, reverse=True))
+    return sorted_counts[0] * sorted_counts[1]
+
+def least_common_multiple(numbers):
+    r = 1
+    for n in numbers:
+        r = r*n // gcd(r, n)
+    return r
+
+def solve2(input):
+    monkeys = parse(input)
+    items = [deque(m.starting_items) for m in monkeys]
+    inspected_counts = [0 for _ in monkeys]
+    modulo = least_common_multiple(m.divisible_by for m in monkeys)
+    for _ in range(10000):
+        run_round(monkeys, items, inspected_counts, divisor=1, modulo=modulo)
     sorted_counts = list(sorted(inspected_counts, reverse=True))
     return sorted_counts[0] * sorted_counts[1]
 
 assert solve1(EXAMPLE) == 10605
+assert solve2(EXAMPLE) == 2713310158
 
 with open('input') as f:
     input = f.read()
 
 print(solve1(input))
+print(solve2(input))
