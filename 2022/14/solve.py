@@ -22,24 +22,26 @@ def print_world(walls, sand):
     for y in range(ymin, ymax + 1):
         print(''.join('#' if (x, y) in walls else 'o' if (x, y) in sand else ' ' for x in range(xmin, xmax+1)))
 
-def step_sand(x, y, blocked):
+def step_sand(x, y, blocked, floor_y=None):
+    if y+1 == floor_y:
+        return x, y
     for p in [(x, y+1), (x-1, y+1), (x+1, y+1)]:
         if p not in blocked:
             return p
     return x, y
 
-def flow_sand(blocked, max_y):
+def flow_sand(blocked, max_y=None, floor_y=None):
     p = 500, 0
     while True:
         px, py = p
-        if py > max_y:
+        if max_y and py > max_y:
             return None
-        new_p = step_sand(px, py, blocked)
+        new_p = step_sand(px, py, blocked, floor_y=floor_y)
         if p == new_p:
             return p
         p = new_p
 
-def solve1(input):
+def parse_walls(input):
     walls = set()
     for path in parse(input):
         for p1, p2 in zip(path, path[1:]):
@@ -52,19 +54,35 @@ def solve1(input):
                 assert y1 == y2
                 for x in range(min(x1, x2), max(x1, x2) + 1):
                     walls.add((x, y1))
+    return walls
+
+def solve1(input):
+    walls = parse_walls(input)
     sand = set()
     max_y = max(p[1] for p in walls)
     while True:
-        new_sand = flow_sand(set.union(walls, sand), max_y)
+        new_sand = flow_sand(set.union(walls, sand), max_y=max_y)
         if new_sand is None:
             break
         sand.add(new_sand)
     #print_world(walls, sand)
     return len(sand)
 
+def solve2(input):
+    walls = parse_walls(input)
+    sand = set()
+    floor_y = 2 + max(p[1] for p in walls)
+    while (500, 0) not in sand:
+        new_sand = flow_sand(set.union(walls, sand), floor_y=floor_y)
+        sand.add(new_sand)
+    #print_world(walls, sand)
+    return len(sand)
+
 assert solve1(EXAMPLE) == 24
+assert solve2(EXAMPLE) == 93
 
 with open('input') as f:
     input = f.read()
 
 print(solve1(input))
+print(solve2(input))
