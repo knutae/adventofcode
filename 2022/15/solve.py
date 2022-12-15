@@ -74,11 +74,13 @@ def split_ranges(ranges, n):
             new_ranges.append(r)
     return new_ranges
 
-assert simplify_ranges([]) == []
-assert simplify_ranges([range(1,3)]) == [range(1,3)]
-assert simplify_ranges([range(1,3), range(4,10)]) == [range(1,3), range(4,10)]
-assert simplify_ranges([range(1,3), range(3,10)]) == [range(1,10)]
-assert simplify_ranges([range(3,10), range(1,3)]) == [range(1,10)]
+def crop_ranges(ranges, low, high):
+    new_ranges = []
+    for r in ranges:
+        if r.stop <= low or r.start > high:
+            continue
+        new_ranges.append(range(max(low, r.start), min(high, r.stop)))
+    return new_ranges
 
 def solve1(input, row):
     x_ranges = []
@@ -93,16 +95,43 @@ def solve1(input, row):
         x_ranges = split_ranges(x_ranges, x)
     return sum(len(r) for r in x_ranges)
 
+def solve2(input, low, high):
+    candidates = []
+    parsed = parse(input)
+    for row in range(low, high+1):
+        x_ranges = []
+        for sensor, beacon in parsed:
+            r = sensor_range_at_row(sensor, beacon, row)
+            x_ranges.append(r)
+        x_ranges = simplify_ranges(x_ranges)
+        x_ranges = crop_ranges(x_ranges, low, high+1)
+        if x_ranges != [range(low, high+1)]:
+            #print(row, x_ranges)
+            assert len(x_ranges) == 2
+            assert x_ranges[0].stop + 1 == x_ranges[1].start
+            candidates.append((x_ranges[0].stop, row))
+    assert len(candidates) == 1
+    x, y = candidates[0]
+    return x * 4000000 + y
+
 assert sensor_range_at_row((8,7), (2,10), -3) == range(0)
 assert sensor_range_at_row((8,7), (2,10), -2) == range(8, 9)
 assert sensor_range_at_row((8,7), (2,10), 7) == range(-1, 18)
 assert sensor_range_at_row((8,7), (2,10), 10) == range(2, 15)
 assert sensor_range_at_row((8,7), (2,10), 16) == range(8, 9)
 assert sensor_range_at_row((8,7), (2,10), 17) == range(0)
+assert simplify_ranges([]) == []
+assert simplify_ranges([range(1,3)]) == [range(1,3)]
+assert simplify_ranges([range(1,3), range(4,10)]) == [range(1,3), range(4,10)]
+assert simplify_ranges([range(1,3), range(3,10)]) == [range(1,10)]
+assert simplify_ranges([range(3,10), range(1,3)]) == [range(1,10)]
+assert crop_ranges([range(1,5), range(10, 20), range(25, 40), range(50, 60)], 15, 30) == [range(15, 20), range(25, 30)]
 
 assert solve1(EXAMPLE, 10) == 26
+assert solve2(EXAMPLE, 0, 20) == 56000011
 
 with open('input') as f:
     input = f.read()
 
 print(solve1(input, 2000000))
+print(solve2(input, 0, 4000000))
