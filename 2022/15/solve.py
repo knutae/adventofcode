@@ -42,16 +42,56 @@ def sensor_range_at_row(sensor, beacon, row):
         return range(0)
     return range(sensor[0] - x_dist, sensor[0] + x_dist + 1)
 
+def join_ranges(a, b):
+    assert a.start <= b.start
+    if a.stop >= b.start:
+        return range(a.start, max(a.stop, b.stop))
+    return None
+
+def simplify_ranges(ranges):
+    ranges.sort(key=lambda r:r.start)
+    while len(ranges) > 1:
+        for i in range(len(ranges) - 1):
+            joined = join_ranges(ranges[i], ranges[i+1])
+            if joined:
+                ranges = ranges[0:i] + [joined] + ranges[i+2:]
+                break
+        else:
+            break
+    return ranges
+
+def split_ranges(ranges, n):
+    new_ranges = []
+    for r in ranges:
+        if n in r:
+            if len(r) == 1:
+                continue
+            if n > r.start:
+                new_ranges.append(range(r.start, n))
+            if n < r.stop - 1:
+                new_ranges.append(range(n+1, r.stop))
+        else:
+            new_ranges.append(r)
+    return new_ranges
+
+assert simplify_ranges([]) == []
+assert simplify_ranges([range(1,3)]) == [range(1,3)]
+assert simplify_ranges([range(1,3), range(4,10)]) == [range(1,3), range(4,10)]
+assert simplify_ranges([range(1,3), range(3,10)]) == [range(1,10)]
+assert simplify_ranges([range(3,10), range(1,3)]) == [range(1,10)]
+
 def solve1(input, row):
-    x_positions = set()
+    x_ranges = []
     x_beacons = set()
     for sensor, beacon in parse(input):
         r = sensor_range_at_row(sensor, beacon, row)
-        for x in r:
-            x_positions.add(x)
+        x_ranges.append(r)
+        x_ranges = simplify_ranges(x_ranges)
         if beacon[1] == row:
             x_beacons.add(beacon[0])
-    return len(x_positions.difference(x_beacons))
+    for x in x_beacons:
+        x_ranges = split_ranges(x_ranges, x)
+    return sum(len(r) for r in x_ranges)
 
 assert sensor_range_at_row((8,7), (2,10), -3) == range(0)
 assert sensor_range_at_row((8,7), (2,10), -2) == range(8, 9)
