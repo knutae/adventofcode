@@ -33,12 +33,11 @@ class State:
     pos: str
     closed_valves: typing.FrozenSet[str]
     current_pressure: int
-    total_pressure: int
     added_pressure: int
 
-def generate_transitions(valves, state: State):
+def generate_transitions(valves, state: State, total_pressure):
     current_pressure = state.current_pressure + state.added_pressure
-    total_pressure = state.total_pressure + current_pressure
+    new_total_pressure = total_pressure + current_pressure
     if len(state.closed_valves) == 0:
         # nothing to do after all valves are open
         # use an empty location to improve hashing
@@ -46,8 +45,7 @@ def generate_transitions(valves, state: State):
             '',
             state.closed_valves,
             current_pressure,
-            total_pressure,
-            0)
+            0), new_total_pressure
         return
     if state.pos in state.closed_valves:
         # open the current valve
@@ -55,30 +53,29 @@ def generate_transitions(valves, state: State):
             state.pos,
             frozenset.difference(state.closed_valves, {state.pos}),
             current_pressure,
-            total_pressure,
-            valves[state.pos][0])
+            valves[state.pos][0]), new_total_pressure
     for tunnel in valves[state.pos][1]:
         # move to a different location
         yield State(
             tunnel,
             state.closed_valves,
             current_pressure,
-            total_pressure,
-            0)
+            0), new_total_pressure
 
 def solve1(input, verbose=False):
     valves = parse(input)
     closed_valves ={v for v in valves if valves[v][0] > 0}
-    states = {State('AA', frozenset(closed_valves), 0, 0, 0)}
+    states = {State('AA', frozenset(closed_valves), 0, 0): 0}
     for minute in range(30):
-        new_states = set()
-        for s in states:
-            for ns in generate_transitions(valves, s):
-                new_states.add(ns)
+        new_states = dict()
+        for s, total_pressure in states.items():
+            for ns, new_total_pressure in generate_transitions(valves, s, total_pressure):
+                if ns not in new_states or new_states[ns] < new_total_pressure:
+                    new_states[ns] = new_total_pressure
         states = new_states
         if verbose:
             print(minute, len(states))
-    return max(s.total_pressure for s in states)
+    return max(states.values())
 
 assert solve1(EXAMPLE) == 1651
 
