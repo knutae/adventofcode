@@ -96,9 +96,25 @@ def solve1(input):
         (1 + max(y for _,y in positions) - min(y for _,y in positions)))
     return rectange_size - len(positions)
 
+def solve2(input):
+    positions = parse(input)
+    move_order = list(INITIAL_MOVE_ORDER)
+    n = 0
+    while True:
+        n += 1
+        new_positions = step(positions, move_order)
+        if new_positions == positions:
+            #print_rectangle(positions)
+            return n
+        positions = new_positions
+        move_order.append(move_order[0])
+        del move_order[0]
+
 assert solve1(EXAMPLE) == 110
+assert solve2(EXAMPLE) == 20
 
 with open('input') as f:
     input = f.read()
 
 print(solve1(input))
+print(solve2(input))
