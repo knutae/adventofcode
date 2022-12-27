@@ -21,7 +21,7 @@ def parse_blueprint(line):
 def parse(input):
     return dict(parse_blueprint(line) for line in input.strip().split('\n'))
 
-RESOURCE_INDEX = ['ore', 'clay', 'obsidian', 'geode']
+RESOURCE_INDEX = ['geode', 'obsidian', 'clay', 'ore']
 
 def transitions(blueprint, robots, resources):
     # not building a robot is always an option
@@ -37,18 +37,22 @@ def transitions(blueprint, robots, resources):
 def all_counts_higher(a, b):
     return a != b and all(x >= y for x, y in zip(a, b))
 
-def simulate(blueprint, steps, verbose=False):
+def simulate(blueprint, steps, search_limit=50000, verbose=False):
     blueprint = {
         RESOURCE_INDEX.index(robot): tuple(costs.get(RESOURCE_INDEX[i], 0) for i in range(4))
         for robot, costs in blueprint.items()
     }
-    current_states = {(0,0,0,0): {(1,0,0,0)}}
+    current_states = {(0,0,0,0): {(0,0,0,1)}}
     for step in range(steps):
         new_states = defaultdict(set)
-        for resources, all_robots in current_states.items():
+        count = 0
+        for resources, all_robots in sorted(current_states.items(), reverse=True):
             for robots in list(all_robots):
                 for new_robots, new_resources in transitions(blueprint, robots, resources):
                     new_states[new_resources].add(new_robots)
+            count += 1
+            if count >= search_limit:
+                break
         if verbose: print(step, sum(len(r) for r in new_states.values()))
         if step < steps - 1:
             for resources, all_robots in new_states.items():
@@ -59,13 +63,13 @@ def simulate(blueprint, steps, verbose=False):
                         all_robots.remove(robots)
             if verbose: print(step, sum(len(r) for r in new_states.values()))
         current_states = {k:set(v) for k,v in new_states.items() if len(v)>0}
-    return max(geode for _,_,_,geode in current_states)
+    return max(geode for geode,_,_,_ in current_states)
 
 def solve1(input, verbose=False):
     result = 0
     for num, blueprint in parse(input).items():
         geodes = simulate(blueprint, 24, verbose=verbose)
-        #print("***", num, geodes)
+        if verbose: print("***", num, geodes)
         result += num * geodes
     return result
 
