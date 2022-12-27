@@ -73,9 +73,20 @@ def solve1(input, verbose=False):
         result += num * geodes
     return result
 
+def solve2(input, verbose=False):
+    result = 1
+    for num, blueprint in parse(input).items():
+        if num <= 3:
+            geodes = simulate(blueprint, 32, verbose=verbose)
+            if verbose: print("***", num, geodes)
+            result *= geodes
+    return result
+
 assert solve1(EXAMPLE) == 33
+assert solve2(EXAMPLE) == 56 * 62
 
 with open('input') as f:
     input = f.read()
 
 print(solve1(input))
+print(solve2(input))
