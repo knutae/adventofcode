@@ -105,6 +105,72 @@ def solve1(input):
     col, row = pos
     return 1000 * (row + 1) + 4 * (col + 1) + '>v<^'.index(direction)
 
+def rotate_left_2d(x, y):
+    assert (x == 0 or y == 0) and abs(x + y) == 1
+    return -y, x
+
+def rotate_right_2d(x, y):
+    assert (x == 0 or y == 0) and abs(x + y) == 1
+    return y, -x
+
+def rotate_2d(x, y, left):
+    if left:
+        return rotate_left_2d(x, y)
+    else:
+        return rotate_right_2d(x, y)
+
+assert rotate_left_2d(1, 0) == (0, 1)
+assert rotate_left_2d(0, 1) == (-1, 0)
+assert rotate_left_2d(-1, 0) == (0, -1)
+assert rotate_left_2d(0, -1) == (1, 0)
+assert rotate_right_2d(1, 0) == (0, -1)
+assert rotate_right_2d(0, 1) == (1, 0)
+assert rotate_right_2d(-1, 0) == (0, 1)
+assert rotate_right_2d(0, -1) == (-1, 0)
+
+def rotate_left_3d(vec, around):
+    x, y, z = vec
+    nx, ny, nz = around
+    if nx != 0:
+        assert x == 0
+        y, z = rotate_2d(y, z, nx > 0)
+    elif ny != 0:
+        assert y == 0
+        x, z = rotate_2d(x, z, ny > 0)
+    else:
+        assert nz != 0 and z == 0
+        x, y = rotate_2d(x, y, nz > 0)
+    return x, y, z
+
+def rotate_right_3d(vec, around):
+    x, y, z = vec
+    nx, ny, nz = around
+    if nx != 0:
+        assert x == 0
+        y, z = rotate_2d(y, z, nx < 0)
+    elif ny != 0:
+        assert y == 0
+        x, z = rotate_2d(x, z, ny < 0)
+    else:
+        assert nz != 0 and z == 0
+        x, y = rotate_2d(x, y, nz < 0)
+    return x, y, z
+
+class CubeFace:
+    def __init__(self, normal, forward):
+        self.normal = normal # perpendicular vector
+        self.forward = forward # "up" vector on board
+
+    def left(self):
+        return CubeFace(rotate_left_3d(self.normal, self.forward), self.forward)
+    
+    def right(self):
+        return CubeFace(rotate_right_3d(self.normal, self.forward), self.forward)
+    
+    def down(self):
+        right = rotate_left_3d(self.forward, self.normal)
+        return CubeFace(rotate_left_3d(self.normal, right), rotate_left_3d(self.normal, right))
+
 assert solve1(EXAMPLE) == 6032
 
 with open('input') as f:
