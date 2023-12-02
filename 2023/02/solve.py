@@ -36,7 +36,25 @@ def solve1(data):
 
 assert solve1(EXAMPLE) == 8
 
+def cube_power(draws):
+    red, green, blue = 0, 0, 0
+    for draw in draws:
+        red = max(red, draw.get('red', 0))
+        green = max(green, draw.get('green', 0))
+        blue = max(blue, draw.get('blue', 0))
+    return red * green * blue
+
+def solve2(data):
+    games = parse(data)
+    r = 0
+    for _, draws in games:
+        r += cube_power(draws)
+    return r
+
+assert solve2(EXAMPLE) == 2286
+
 with open('input') as f:
     data = f.read()
 
 print(solve1(data))
+print(solve2(data))
