@@ -37,17 +37,9 @@ def solve2(data):
     lines = data.strip().split("\n")
     r = 0
     for line in lines:
-        first, last = (len(line), None), (-1, None)
-        for word, i in DIGITS.items():
-            lpos = line.find(word)
-            if lpos != -1 and lpos < first[0]:
-                assert lpos != first[0]
-                first = lpos, i
-            rpos = line.rfind(word)
-            if rpos != -1 and rpos > last[0]:
-                assert rpos != last[0]
-                last = rpos, i
-        #print(line, first, last)
+        digits = {word: d for word, d in DIGITS.items() if word in line}
+        first = min((line.find(word), d) for word, d in digits.items())
+        last = max((line.rfind(word), d) for word, d in digits.items())
         r += int(first[1] + last[1])
     return r
 
