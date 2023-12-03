@@ -51,9 +51,21 @@ def solve1(data):
     return r
 
 
+def solve2(data):
+    numbers, symbols = parse(data)
+    r = 0
+    gears = [pos for pos in symbols if symbols[pos] == '*']
+    for gear in gears:
+        adjacent = [(pos, num) for pos, num in numbers.items() if is_adjacent(num, pos, gear)]
+        if len(adjacent) == 2:
+            r += adjacent[0][1] * adjacent[1][1]
+    return r
+
 assert solve1(EXAMPLE) == 4361
+assert solve2(EXAMPLE) == 467835
 
 with open("input") as f:
     data = f.read()
 
 print(solve1(data))
+print(solve2(data))
