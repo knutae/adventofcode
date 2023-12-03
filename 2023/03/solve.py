@@ -1,3 +1,5 @@
+import math
+
 EXAMPLE = """
 467..114..
 ...*......
@@ -37,9 +39,7 @@ def is_adjacent(number, number_pos, symbol_pos):
     number_length = len(str(number))
     nx, ny = number_pos
     sx, sy = symbol_pos
-    if abs(sy - ny) > 1:
-        return False
-    return sx >= nx - 1 and sx <= nx + number_length
+    return abs(sy - ny) <= 1 and sx >= nx - 1 and sx <= nx + number_length
 
 
 def solve1(data):
@@ -56,9 +56,9 @@ def solve2(data):
     r = 0
     gears = [pos for pos in symbols if symbols[pos] == '*']
     for gear in gears:
-        adjacent = [(pos, num) for pos, num in numbers.items() if is_adjacent(num, pos, gear)]
+        adjacent = [num for pos, num in numbers.items() if is_adjacent(num, pos, gear)]
         if len(adjacent) == 2:
-            r += adjacent[0][1] * adjacent[1][1]
+            r += math.prod(adjacent)
     return r
 
 assert solve1(EXAMPLE) == 4361
