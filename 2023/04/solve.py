@@ -8,11 +8,11 @@ Card 6: 31 18 13 56 72 | 74 77 10 23 35 67 36 11
 '''
 
 def parse_card(line):
-    name, rest = line.split(': ')
+    _, rest = line.split(': ')
     winning, mine = rest.split(' | ')
     winning = [int(x) for x in winning.split()]
     mine = [int(x) for x in mine.split()]
-    return name, winning, mine
+    return winning, mine
 
 def parse(data):
     return [parse_card(line) for line in data.strip().split('\n')]
@@ -22,7 +22,7 @@ def parse(data):
 def solve1(data):
     cards = parse(data)
     r = 0
-    for _, winning, mine in cards:
+    for winning, mine in cards:
         score = 0
         for c in mine:
             if c in winning:
@@ -32,7 +32,21 @@ def solve1(data):
 
 assert solve1(EXAMPLE) == 13
 
+def solve2(data):
+    cards = parse(data)
+    card_counts = [1] * len(cards)
+    for i, card in enumerate(cards):
+        winning, mine = card
+        score = sum(1 for c in mine if c in winning)
+        for x in range(score):
+            if i + x + 1 < len(cards):
+                card_counts[i + x + 1] += card_counts[i]
+    return sum(card_counts)
+
+assert solve2(EXAMPLE) == 30
+
 with open('input') as f:
     data = f.read()
 
 print(solve1(data))
+print(solve2(data))
