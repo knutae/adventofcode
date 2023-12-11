@@ -22,21 +22,21 @@ def parse(data):
                 galaxies.add((x,y))
     return galaxies
 
-def expand_1d_map(coord):
+def expand_1d_map(coord, expand_amount=2):
     mapping = {}
     add = 0
     for c in range(max(coord) + 1):
         if c in coord:
             mapping[c] = c + add
         else:
-            add += 1
+            add += (expand_amount - 1)
     return mapping
 
-def expand(galaxies):
+def expand(galaxies, expand_amount=2):
     cols = {x for x,_ in galaxies}
     rows = {y for _,y in galaxies}
-    col_map = expand_1d_map(cols)
-    row_map = expand_1d_map(rows)
+    col_map = expand_1d_map(cols, expand_amount)
+    row_map = expand_1d_map(rows, expand_amount)
     return {(col_map[x], row_map[y]) for x,y in galaxies}
 
 def print_galaxies(galaxies):
@@ -56,7 +56,18 @@ def solve1(data):
 
 assert solve1(EXAMPLE) == 374
 
+def solve2(data, expand_amount=1000000):
+    galaxies = parse(data)
+    galaxies = expand(galaxies, expand_amount)
+    result = sum(distance(a,b) for a, b in combinations(galaxies, 2))
+    #print(expand_amount, result)
+    return result
+
+assert solve2(EXAMPLE, 10) == 1030
+assert solve2(EXAMPLE, 100) == 8410
+
 with open('input') as f:
     data = f.read()
 
 print(solve1(data))
+print(solve2(data))
