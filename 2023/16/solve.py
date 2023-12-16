@@ -74,9 +74,8 @@ def print_grid(dimensions, tiles, beams_visited):
     for y in range(h):
         print(''.join('#' if (x,y) in pos_visited else tiles.get((x,y), '.') for x in range(w)))
 
-def solve1(data):
-    dimensions, tiles = parse(data)
-    active_beams = [((-1,0), (1,0))]
+def count_energized(dimensions, tiles, start_beam):
+    active_beams = [start_beam]
     beams_visited = set()
     while active_beams:
         new_beams = []
@@ -87,9 +86,27 @@ def solve1(data):
     #print_grid(dimensions, tiles, beams_visited)
     return len({pos for pos,_ in beams_visited})
 
+def solve1(data):
+    dimensions, tiles = parse(data)
+    return count_energized(dimensions, tiles, ((-1,0), (1,0)))
+
+def solve2(data):
+    dimensions, tiles = parse(data)
+    w, h = dimensions
+    max_energized = 0
+    for y in range(h):
+        max_energized = max(max_energized, count_energized(dimensions, tiles, ((-1,y), (1,0))))
+        max_energized = max(max_energized, count_energized(dimensions, tiles, ((w,y), (-1,0))))
+    for x in range(w):
+        max_energized = max(max_energized, count_energized(dimensions, tiles, ((x,-1), (0,1))))
+        max_energized = max(max_energized, count_energized(dimensions, tiles, ((x,h), (0,-1))))
+    return max_energized
+
 assert solve1(EXAMPLE) == 46
+assert solve2(EXAMPLE) == 51
 
 with open('input') as f:
     data = f.read()
 
 print(solve1(data))
+print(solve2(data))
