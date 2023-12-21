@@ -15,22 +15,26 @@ L 2 (#015232)
 U 2 (#7a21e3)
 '''
 
-def parse_line(line):
-    direction, length, color = line.split()
-    length = int(length)
-    color = color[1:-1]
-    return direction, length, color
-
-def parse(data):
-    lines = data.strip().split('\n')
-    return [parse_line(line) for line in lines]
-
 DIRECTIONS = {
     'R': (1,0),
     'D': (0,1),
     'L': (-1,0),
     'U': (0,-1),
 }
+
+def parse_line(line, v2):
+    direction, length, color = line.split()
+    length = int(length)
+    if v2:
+        color = color[2:-1]
+        length = int(color[:-1], 16)
+        direction = 'RDLU'[int(color[-1])]
+    direction = DIRECTIONS[direction]
+    return direction, length
+
+def parse(data, v2=False):
+    lines = data.strip().split('\n')
+    return [parse_line(line, v2) for line in lines]
 
 def print_grid(tiles):
     y1 = min(y for _,y in tiles)
@@ -70,25 +74,80 @@ def fill_tiles(tiles):
         current_tiles = new_tiles
     return filled
 
-def solve1(data):
-    dig_plan = parse(data)
-    x, y = 0, 0
-    #tiles = {(x,y)}
+def solve_simple(dig_plan):
     tiles = set()
-    for direction, length, _ in dig_plan:
-        dx, dy = DIRECTIONS[direction]
+    x, y = 0, 0
+    for direction, length in dig_plan:
+        dx, dy = direction
         for _ in range(length):
             x += dx
             y += dy
             assert (x,y) not in tiles
             tiles.add((x,y))
-    tiles = fill_tiles(tiles)
-    #print_grid(tiles)
+    return fill_tiles(tiles)
+
+def solve1(data):
+    dig_plan = parse(data)
+    tiles = solve_simple(dig_plan)
     return len(tiles)
 
+def plan_to_path(dig_plan):
+    x, y = 0, 0
+    path = [(0,0)]
+    for direction, length in dig_plan:
+        dx, dy = direction
+        x += dx * length
+        y += dy * length
+        path.append((x,y))
+    assert x == 0 and y == 0
+    return path
+
+def sign(n):
+    return n and [1,-1][n<0]
+
+def solve2(data):
+    dig_plan = parse(data, v2=True)
+    path = plan_to_path(dig_plan)
+    x_index = [*sorted({x for x,_ in path})]
+    y_index = [*sorted({y for _,y in path})]
+    index_dig_plan = []
+    for p2, p1 in zip(path[1:] + path[:1], path):
+        x1, y1 = p1
+        x2, y2 = p2
+        x1 = x_index.index(x1)
+        x2 = x_index.index(x2)
+        y1 = y_index.index(y1)
+        y2 = y_index.index(y2)
+        dx = x2 - x1
+        dy = y2 - y1
+        length = max(abs(dx), abs(dy)) * 2
+        direction = sign(dx), sign(dy)
+        index_dig_plan.append((direction, length))
+    index_tiles = solve_simple(index_dig_plan)
+    min_xi = min(x for x,_ in index_tiles)
+    min_yi = min(y for _,y in index_tiles)
+    index_tiles = {(xi-min_xi, yi-min_yi) for xi, yi in index_tiles}
+    result = 0
+    for xi, yi in index_tiles:
+        assert xi >= 0
+        assert yi >= 0
+        # even indexes are vertices, odd are ranges
+        if xi % 2 == 0:
+            w = 1
+        else:
+            w = x_index[xi//2 + 1] - x_index[xi//2] - 1
+        if yi % 2 == 0:
+            h = 1
+        else:
+            h = y_index[yi//2 + 1] - y_index[yi//2] - 1
+        result += w*h
+    return result
+
 assert solve1(EXAMPLE) == 62
+assert solve2(EXAMPLE) == 952408144115
 
 with open('input') as f:
     data = f.read()
 
 print(solve1(data))
+print(solve2(data))
