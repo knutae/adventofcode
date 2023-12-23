@@ -86,7 +86,7 @@ def number_of_falling_bricks(bricks, brick, tower):
         if brick == other_brick or lower_brick_z(other_brick) <= upper_z:
             # can safely skip bricks lower than the brick to remove
             continue
-        moved_brick = drop_brick(shaky_tower, other_brick);
+        moved_brick = drop_brick(shaky_tower, other_brick)
         if moved_brick != other_brick:
             shaky_tower.difference_update(brick_coordinates(other_brick))
             shaky_tower.update(brick_coordinates(moved_brick))
