@@ -57,7 +57,26 @@ def solve1(data):
 
 assert solve1(EXAMPLE) == 18
 
+def solve2(data):
+    lines = parse(data)
+    height = len(lines)
+    width = len(lines[0])
+    count = 0
+    for y in range(1, height-1):
+        for x in range(1, width-1):
+            if lines[y][x] != 'A':
+                continue
+            diag1 = lines[y-1][x-1] + lines[y+1][x+1]
+            diag2 = lines[y-1][x+1] + lines[y+1][x-1]
+            accepted = ('SM', 'MS')
+            if diag1 in accepted and diag2 in accepted:
+                count += 1
+    return count
+
+assert solve2(EXAMPLE) == 9
+
 with open('input') as f:
     data = f.read()
 
 print(solve1(data))
+print(solve2(data))
