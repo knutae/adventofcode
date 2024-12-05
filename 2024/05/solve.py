@@ -1,3 +1,6 @@
+from collections import defaultdict
+from graphlib import TopologicalSorter
+
 EXAMPLE = '''
 47|53
 97|13
@@ -56,7 +59,27 @@ def solve1(data):
 
 assert solve1(EXAMPLE) == 143
 
+def topological_sort_order(order_set, update):
+    graph = defaultdict(set)
+    for a, b in order_set:
+        if a in update and b in update:
+            graph[b].add(a)
+    return list(TopologicalSorter(graph).static_order())
+
+def solve2(data):
+    order_set, updates = parse(data)
+    r = 0
+    for update in updates:
+        if not is_topologically_sorted(update, order_set):
+            corrected = topological_sort_order(order_set, update)
+            assert len(corrected) == len(update)
+            r += corrected[len(corrected) // 2]
+    return r
+
+assert solve2(EXAMPLE) == 123
+
 with open('input') as f:
     data = f.read()
 
 print(solve1(data))
+print(solve2(data))
