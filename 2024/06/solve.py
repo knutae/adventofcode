@@ -1,3 +1,5 @@
+from collections import defaultdict
+
 EXAMPLE = '''
 ....#.....
 .........#
@@ -64,7 +66,40 @@ def solve1(data):
 
 assert solve1(EXAMPLE) == 41
 
+def has_loop(size, obstructions, guard):
+    direction = (0, -1) # up
+    visited = defaultdict(list)
+    while in_mapped_area(size, guard):
+        if direction in visited[guard]:
+            # have visited the same position while facing the same direction
+            return True
+        visited[guard].append(direction)
+        target = target_pos(guard, direction)
+        if target in obstructions:
+            direction = turn_right(direction)
+        else:
+            guard = target
+    # left the area, no loop
+    return False
+
+def solve2(data):
+    size, obstructions, guard = parse(data)
+    w, h = size
+    loop_count = 0
+    for y in range(h):
+        for x in range(w):
+            pos = x,y
+            if pos == guard or pos in obstructions:
+                continue
+            if has_loop(size, obstructions | {pos}, guard):
+                #print(f'loop at {pos}')
+                loop_count += 1
+    return loop_count
+
+assert solve2(EXAMPLE) == 6
+
 with open('input') as f:
     data = f.read()
 
 print(solve1(data))
+print(solve2(data))
