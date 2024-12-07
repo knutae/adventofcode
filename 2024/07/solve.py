@@ -40,7 +40,37 @@ def solve1(data):
 
 assert solve1(EXAMPLE) == 3749
 
+def can_combine2(result, numbers):
+    if result < 0:
+        return False
+    assert len(numbers) > 1
+    if len(numbers) == 2:
+        a, b = numbers
+        return a + b == result or a * b == result or str(a) + str(b) == str(result)
+    last = numbers[-1]
+    remaining = numbers[:-1]
+    if can_combine2(result - last, remaining):
+        return True
+    if result % last == 0 and can_combine2(result // last, remaining):
+        return True
+    sresult = str(result)
+    slast = str(last)
+    if len(sresult) > len(slast) and sresult.endswith(slast) and can_combine2(int(sresult[:len(sresult)-len(slast)]), remaining):
+        return True
+    return False
+
+def solve2(data):
+    equations = parse(data)
+    r = 0
+    for result, numbers in equations:
+        if can_combine2(result, numbers):
+            r += result
+    return r
+
+assert solve2(EXAMPLE) == 11387
+
 with open('input') as f:
     data = f.read()
 
 print(solve1(data))
+print(solve2(data))
