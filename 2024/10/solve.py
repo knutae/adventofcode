@@ -1,3 +1,5 @@
+from collections import defaultdict
+
 EXAMPLE = '''
 89010123
 78121874
@@ -21,17 +23,23 @@ def parse(data):
 def adjacent(x, y):
     return [(x-1, y), (x+1, y), (x, y-1), (x, y+1)]
 
-def trailhead_score(heights, pos):
+def trailhead_paths(heights, pos):
     assert heights[pos] == 0
-    positions = {pos}
+    positions = {pos: 1}
     for i in range(1, 10):
-        new_positions = set()
-        for x, y in positions:
-            for new_pos in adjacent(x, y):
+        new_positions = defaultdict(int)
+        for pos, num_paths in positions.items():
+            for new_pos in adjacent(*pos):
                 if heights.get(new_pos) == i:
-                    new_positions.add(new_pos)
+                    new_positions[new_pos] += num_paths
         positions = new_positions
-    return len(positions)
+    return positions
+
+def trailhead_score(heights, pos):
+    return len(trailhead_paths(heights, pos))
+
+def distinct_paths(heights, pos):
+    return sum(trailhead_paths(heights, pos).values())
 
 def solve1(data):
     size, heights = parse(data)
@@ -43,9 +51,21 @@ def solve1(data):
                 score += trailhead_score(heights, (x,y))
     return score
 
+def solve2(data):
+    size, heights = parse(data)
+    w, h = size
+    score = 0
+    for y in range(h):
+        for x in range(w):
+            if heights[(x,y)] == 0:
+                score += distinct_paths(heights, (x,y))
+    return score
+
 assert solve1(EXAMPLE) == 36
+assert solve2(EXAMPLE) == 81
 
 with open('input') as f:
     data = f.read()
 
 print(solve1(data))
+print(solve2(data))
