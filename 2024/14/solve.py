@@ -52,9 +52,50 @@ def solve1(data, w, h):
                 down_right += 1
     return up_left * up_right * down_left * down_right
 
+def print_robots(robots, w, h):
+    def char_at(x, y):
+        c = sum(1 for (p, _) in robots if p == (x, y))
+        return str(c) if c > 0 else '.'
+    return '\n'.join(
+        ''.join(char_at(x, y) for x in range(w))
+        for y in range(h)
+    )
+
+def connectedness_score(robots):
+    positions = set(p for p, _ in robots)
+    score = 0
+    for x, y in positions:
+        for adjacent in [(x-1,y), (x+1,y), (x,y-1), (x,y+1)]:
+            if adjacent in positions:
+                score += 1
+    return score
+
+def solve2(data, w=101, h=103):
+    robots = parse(data)
+    steps = 0
+    best_score = 0
+    best_steps = 0
+    seen = set(tuple(robots))
+    while True:
+        steps += 1
+        robots = step(robots, w, h)
+        score = connectedness_score(robots)
+        if score > best_score:
+            best_steps = steps
+            best_score = score
+            print(print_robots(robots, w, h))
+            print(steps)
+        key = tuple(robots)
+        if key in seen:
+            print(f'Cycle at step {steps}')
+            break
+        seen.add(key)
+    return best_steps
+
 assert solve1(EXAMPLE, 11, 7) == 12
 
 with open('input') as f:
     data = f.read()
 
 print(solve1(data, 101, 103))
+print(solve2(data))
