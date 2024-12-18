@@ -40,14 +40,13 @@ def adjacent(p, size):
     if y < size-1:
         yield (x, y+1)
 
-def solve1(data, size=71, limit=1024):
-    points = parse(data)
+def steps_to_target(points, size, limit):
     corrupted = set(points[:limit])
     visited = {(0,0)}
     target = (size-1,size-1)
     steps = 0
     current = {(0,0)}
-    while target not in visited:
+    while current and target not in visited:
         steps += 1
         next_points = []
         for p in current:
@@ -57,11 +56,28 @@ def solve1(data, size=71, limit=1024):
                 next_points.append(q)
                 visited.add(q)
         current = next_points
+    return steps if target in visited else None
+
+def solve1(data, size=71, limit=1024):
+    points = parse(data)
+    steps = steps_to_target(points, size, limit)
+    assert steps is not None
     return steps
 
 assert solve1(EXAMPLE, 7, 12) == 22
+
+def solve2(data, size=71):
+    points = parse(data)
+    # could probably do a binary search here, but linear should be fast enough
+    for i in range(1, len(points)):
+        if steps_to_target(points, size, i) is None:
+            x,y = points[i-1]
+            return f'{x},{y}'
+
+assert solve2(EXAMPLE, 7) == '6,1'
 
 with open('input') as f:
     data = f.read()
 
 print(solve1(data))
+print(solve2(data))
