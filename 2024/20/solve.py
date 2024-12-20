@@ -46,8 +46,7 @@ def cheats_at(path, pos):
             cheat_lengths.append(path[q] - s - 2)
     return cheat_lengths
 
-def solve1(data, min_save=100):
-    walls, start, end = parse(data)
+def build_path(walls, start, end):
     path = {start: 0}
     path_list = [start]
     pos = start
@@ -60,6 +59,11 @@ def solve1(data, min_save=100):
         pos = next[0]
         path[pos] = len(path)
         path_list.append(pos)
+    return path, path_list
+
+def solve1(data, min_save=100):
+    walls, start, end = parse(data)
+    path, path_list = build_path(walls, start, end)
     r = 0
     for pos in path_list:
         for cheat_length in cheats_at(path, pos):
@@ -69,7 +73,38 @@ def solve1(data, min_save=100):
 
 assert solve1(EXAMPLE, 20) == 5
 
+def manhattan_distance(a, b):
+    ax, ay = a
+    bx, by = b
+    return abs(ax-bx) + abs(ay-by)
+
+def cheats_within(path, pos, max_dist=20):
+    cheat_lengths = []
+    s = path[pos]
+    for q in path:
+        dist = manhattan_distance(pos, q)
+        if dist > max_dist:
+            continue
+        cheat_length = path[q] - s - dist
+        if cheat_length > 0:
+            cheat_lengths.append(cheat_length)
+    return cheat_lengths
+
+def solve2(data, min_save=100):
+    walls, start, end = parse(data)
+    path, path_list = build_path(walls, start, end)
+    r = 0
+    for pos in path_list:
+        for cheat_length in cheats_within(path, pos):
+            if cheat_length >= min_save:
+                r += 1
+    return r
+
+assert solve2(EXAMPLE, 76) == 3
+assert solve2(EXAMPLE, 74) == 7
+
 with open('input') as f:
     data = f.read()
 
 print(solve1(data))
+print(solve2(data))
