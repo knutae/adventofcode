@@ -49,7 +49,7 @@ def sets_of_three(graph):
         for b in nodes:
             for c in graph[b]:
                 if a in graph[c]:
-                    result.add(tuple(sorted((a,b,c))))
+                    result.add(frozenset((a,b,c)))
     return result
 
 assert len(sets_of_three(parse(EXAMPLE))) == 12
@@ -62,7 +62,33 @@ def solve1(data):
 
 assert solve1(EXAMPLE) == 7
 
+def grow_network(graph, network):
+    for candidate in graph:
+        if candidate in network:
+            continue
+        if all(candidate in graph[node] for node in network):
+            yield network | {candidate}
+
+def solve2(data):
+    graph = parse(data)
+    networks = sets_of_three(graph)
+    while True:
+        new_networks = set()
+        for network in networks:
+            for new_network in grow_network(graph, network):
+                new_networks.add(new_network)
+        if len(new_networks) == 0:
+            break
+        networks = new_networks
+    assert len(networks) == 1
+    result = next(iter(networks))
+    result = ','.join(sorted(result))
+    return result
+
+assert solve2(EXAMPLE) == 'co,de,ka,ta'
+
 with open('input') as f:
     data = f.read()
 
 print(solve1(data))
+print(solve2(data))
