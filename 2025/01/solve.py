@@ -30,7 +30,24 @@ def solve1(s):
 
 assert solve1(EXAMPLE) == 3
 
+def solve2(s):
+    dial = 50
+    c = 0
+    for n in parse(s):
+        if n > 0:
+            dist_to_zero = 100 - dial
+        else:
+            assert n < 0
+            dist_to_zero = 100 if dial == 0 else dial
+        if abs(n) >= dist_to_zero:
+            c += 1 + (abs(n) - dist_to_zero) // 100
+        dial = (dial + n) % 100
+    return c
+
+assert solve2(EXAMPLE) == 6
+
 with open('input') as f:
     s = f.read()
 
 print(solve1(s))
+print(solve2(s))
