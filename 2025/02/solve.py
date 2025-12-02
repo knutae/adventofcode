@@ -25,7 +25,37 @@ def solve1(s):
 
 assert solve1(EXAMPLE) == 1227775554
 
+def invalid2(n):
+    s = str(n)
+    length = len(s)
+    for div in range(2, length+1):
+        if length % div != 0:
+            continue
+        h = length // div
+        first = s[0:h]
+        if all(s[i:i+h] == first for i in range(h, length, h)):
+            return True
+    return False
+
+assert invalid2(22)
+assert invalid2(222)
+assert invalid2(2121)
+assert invalid2(212121)
+assert not invalid2(21)
+assert not invalid2(212)
+
+def solve2(s):
+    r = []
+    for a, b in parse(s):
+        for n in range(a, b+1):
+            if invalid2(n):
+                r.append(n)
+    return sum(r)
+
+assert solve2(EXAMPLE) == 4174379265
+
 with open('input') as f:
     s = f.read()
 
 print(solve1(s))
+print(solve2(s))
