@@ -30,19 +30,39 @@ def adjacent(grid, x, y):
 def count_adjacent(grid, x, y):
     return sum(1 for xx, yy in adjacent(grid, x, y) if grid[yy][xx] == '@')
 
-def solve1(s):
-    grid = parse(s)
-    res = 0
+def removable_coords(grid):
     for y, row in enumerate(grid):
         for x, c in enumerate(row):
             if c == '@' and count_adjacent(grid, x, y) < 4:
-                res += 1
-    #print(res)
-    return res
+                yield x, y
+
+def solve1(s):
+    grid = parse(s)
+    return sum(1 for _ in removable_coords(grid))
 
 assert solve1(EXAMPLE) == 13
+
+def remove_from_grid(grid, coords):
+    return [
+        ''.join('.' if (x,y) in coords else c for x, c in enumerate(row))
+        for y, row in enumerate(grid)
+    ]
+
+def solve2(s):
+    grid = parse(s)
+    total_removed = 0
+    while True:
+        coords = set(removable_coords(grid))
+        if len(coords) == 0:
+            break
+        total_removed += len(coords)
+        grid = remove_from_grid(grid, coords)
+    return total_removed
+
+assert solve2(EXAMPLE) == 43
 
 with open('input') as f:
     s = f.read()
 
 print(solve1(s))
+print(solve2(s))
