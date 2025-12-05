@@ -28,7 +28,38 @@ def solve1(s):
 
 assert solve1(EXAMPLE) == 3
 
+def try_join_ranges(a: range, b: range):
+    if a.start > b.start:
+        a, b = b, a
+    if b.start > a.stop:
+        # cannot join
+        return None
+    return range(a.start, max(a.stop, b.stop))
+
+assert try_join_ranges(range(3,6), range(7, 9)) is None
+assert try_join_ranges(range(3,6), range(6, 9)) == range(3,9)
+assert try_join_ranges(range(4,9), range(2, 8)) == range(2,9)
+
+def solve2(s):
+    ranges, _ = parse(s)
+    ranges.sort(key=lambda r:r.start)
+    distinct_ranges = []
+    current = ranges[0]
+    for next in ranges[1:]:
+        joined = try_join_ranges(current, next)
+        if joined is None:
+            distinct_ranges.append(current)
+            current = next
+        else:
+            current = joined
+    distinct_ranges.append(current)
+    #print(distinct_ranges)
+    return sum(len(r) for r in distinct_ranges)
+
+assert solve2(EXAMPLE) == 14
+
 with open('input') as f:
     s = f.read()
 
 print(solve1(s))
+print(solve2(s))
