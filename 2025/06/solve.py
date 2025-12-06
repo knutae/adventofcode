@@ -28,7 +28,31 @@ def solve1(s):
 
 assert solve1(EXAMPLE) == 4277556
 
+def solve2(s):
+    rows = s.strip('\n').split('\n')
+    cols = []
+    for x in range(len(rows[0])-1, -1, -1):
+        cols.append(''.join(row[x] for row in rows).strip())
+    transposed = '\n'.join(cols)
+    problems = transposed.split('\n\n')
+    total = 0
+    for problem in problems:
+        lines = problem.split('\n')
+        op = lines[-1][-1]
+        lines[-1] = lines[-1][:-1] # oh so ugly
+        numbers = [int(line) for line in lines]
+        if op == '+':
+            total += sum(numbers)
+        elif op == '*':
+            total += math.prod(numbers)
+        else:
+            assert False
+    return total
+
+assert solve2(EXAMPLE) == 3263827
+
 with open('input') as f:
     s = f.read()
 
 print(solve1(s))
+print(solve2(s))
