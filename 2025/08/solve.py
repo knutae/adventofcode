@@ -51,7 +51,24 @@ def solve1(s, connections):
 
 assert solve1(EXAMPLE, 10) == 40
 
+def solve2(s):
+    junctions = parse(s)
+    pairs = list(combinations(junctions, 2))
+    pairs.sort(key=lambda x:square_distance(*x))
+    circuits = {x: {x} for x in junctions}
+    for a, b in pairs:
+        circuits[a].update(circuits[b])
+        if len(circuits[a]) == len(junctions):
+            return a[0] * b[0]
+        for x in circuits[a]:
+            if x != a:
+                circuits[x] = circuits[a]
+    assert False
+
+assert solve2(EXAMPLE) == 25272
+
 with open('input') as f:
     s = f.read()
 
 print(solve1(s, 1000))
+print(solve2(s))
