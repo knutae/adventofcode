@@ -52,8 +52,82 @@ def solve1(s):
 
 assert solve1(EXAMPLE) == 7
 
+def lowest_nonzero(joltages):
+    return min(x for x in joltages if x != 0)
+
+def subtract_button_presses(joltages, button, button_press_count):
+    if button_press_count == 0:
+        return joltages
+    else:
+        return [
+            joltage - button_press_count if index in button else joltage
+            for index, joltage in enumerate(joltages)]
+
+def remove_zero_indexes(joltages, buttons):
+    zero_indexes = [i for i, n in enumerate(joltages) if n == 0]
+    return [b for b in buttons if not any(i in b for i in zero_indexes)]
+
+def fewest_button_presses_for_joltages(joltages, buttons):
+    #print(joltages, buttons)
+    if sum(joltages) == 0:
+        assert all(x == 0 for x in joltages)
+        return 0
+    buttons = remove_zero_indexes(joltages, buttons)
+    if len(buttons) == 0:
+        #print(joltages)
+        return None
+    lowest_remaining = min(x for x in joltages if x != 0)
+    assert lowest_remaining > 0
+    # Pick an index with the fewest amount of matching buttons
+    index = min(
+        [index for index, n in enumerate(joltages) if n == lowest_remaining],
+        key=lambda i: len([b for b in buttons if i in b]))
+    #index = joltages.index(lowest_remaining)
+    button_candidates = [b for b in buttons if index in b]
+    #print(index, button_candidates)
+    if len(button_candidates) == 0:
+        # no solution possible with current buttons
+        #print("X", joltages, buttons)
+        return None
+    first_candidate = button_candidates[0]
+    if len(button_candidates) == 1:
+        r = fewest_button_presses_for_joltages(
+            subtract_button_presses(joltages, first_candidate, lowest_remaining),
+            buttons)
+        best = None if r is None else r + lowest_remaining
+        #print("A", joltages, buttons, best)
+        return best
+    best = None
+    remaining_buttons = [b for b in buttons if b != first_candidate]
+    for button_presses in range(lowest_remaining + 1):
+        r = fewest_button_presses_for_joltages(
+            subtract_button_presses(joltages, first_candidate, button_presses),
+            remaining_buttons
+        )
+        if r is None:
+            continue
+        r = r + button_presses
+        if best is None or r < best:
+            #print("New best", r)
+            best = r
+    #print("B", joltages, buttons, best)
+    return best
+
+def solve2(s):
+    puzzles = parse(s)
+    result = 0
+    for _, buttons, joltages in puzzles:
+        #print(buttons, joltages, "...")
+        r = fewest_button_presses_for_joltages(joltages, buttons)
+        #print(buttons, joltages, r)
+        assert r is not None and r > 0
+        result += r
+    return result
+
+assert solve2(EXAMPLE) == 33
 
 with open('input') as f:
     s = f.read()
 
 print(solve1(s))
+print(solve2(s))
